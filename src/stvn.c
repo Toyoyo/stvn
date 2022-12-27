@@ -100,7 +100,6 @@ void backup_spritearray() {
       memset(previoussprites[i].file, 0, 18);
     }
     memcpy(previoussprites[i].file, currentsprites[i].file, 18);
-//    sprintf(previoussprites[i].file, "lala");
   }
 }
 void reset_cursprites() {
