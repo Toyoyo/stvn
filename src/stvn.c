@@ -99,7 +99,6 @@ void backup_spritearray() {
     } else {
       memset(previoussprites[i].file, 0, 18);
     }
-    memcpy(previoussprites[i].file, currentsprites[i].file, 18);
   }
 }
 void reset_cursprites() {
