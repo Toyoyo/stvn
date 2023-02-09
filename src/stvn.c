@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <zlib.h>
 #include <mint/linea.h>
+#include <sys/stat.h>
 // Line reading routine, better than I would have done anyway
 #include "line.h"
 
@@ -550,7 +551,6 @@ parseline:
                     int filelen=strlen(line)-7;
                     if(filelen > 12) filelen=12;
                     memset(currentsprites[spritecount].file, 0, 18);
-//                    snprintf(currentsprites[spritecount].file, 6, "DATA/");
                     memcpy(currentsprites[spritecount].file, line+7, filelen);
                     memset(linex, 0, 4);
                     memset(liney, 0, 4);
@@ -894,6 +894,7 @@ parseline:
         spritecount++;
 
         displaysprite:
+
         sprite=gzopen(spritefile,"rb");
         if(sprite != NULL) {
           char* spritedata;
@@ -901,33 +902,39 @@ parseline:
           int x=0;
           int y=0;
           int ppos;
-          int pctsize=0;
-          int pctread=0;
-          int pctpos=0;
-          char *tmp;
+          unsigned int pctsize=0;
+          unsigned int pctpos=0;
           char* pctmem;
-          pctmem=malloc(1024);
+          unsigned short header;
+          unsigned char bytes[4] = {0};
+
+          // We'll now get the uncompressed files size
+          int sprfd=open(spritefile, O_RDONLY);
+          read(sprfd, &header, 2);
+
+          // gzip or not?
+          if(header == 0x1f8b) {
+            lseek(sprfd, -4, SEEK_END);
+            read(sprfd, &bytes, 4);
+            pctsize=bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
+          } else {
+            struct stat st;
+            stat(spritefile, &st);
+            pctsize=st.st_size;
+          }
+          close(sprfd);
+
+          pctmem=malloc(pctsize);
           if(pctmem == NULL) goto endsprite;
 
-
-          // Read at most bytes, if more needed, allocate 1024 more.
-          // A full-screen sprite would use  640*400 = 256000 bytes, I don't want to use that much.
-          // And the format allows for more.
-          pctread=gzread(sprite, pctmem, 1024);
-          pctsize=pctsize+pctread;
-          while(pctread != 0) {
-            tmp=realloc(pctmem, 1024+pctsize);
-            if(tmp == NULL) {
-              gzclose(sprite);
-              goto abortdraw;
-            }
-            pctmem=tmp;
-            pctread=gzread(sprite, pctmem+pctsize, 1024);
-            pctsize=pctsize+pctread;
-          }
+          gzread(sprite, pctmem, pctsize);
           gzclose(sprite);
 
-          // Now for the grawing routine
+          char *videobuffer=malloc(25600);
+          if(videobuffer == NULL) goto abortdraw;
+          memcpy(videobuffer, videoram, 25600);
+
+          // Now for the drawing routine
           for(pctpos=0; pctpos < pctsize; pctpos++) {
 
             //Horizontal line change!
@@ -950,12 +957,14 @@ parseline:
            if(pctmem[pctpos] == '0' || pctmem[pctpos] == '1') {
               if(x+posx < 639 && posy+y <= 400) {
                 ppos = (y + posy) * 640 + x + posx;
-                if(pctmem[pctpos] == '1') videoram[ppos / 8] |= 1 << 7 - (ppos % 8);
-                if(pctmem[pctpos] == '0') videoram[ppos / 8] &= ~(1 << 7 - (ppos % 8));
+                if(pctmem[pctpos] == '1') videobuffer[ppos / 8] |= 1 << 7 - (ppos % 8);
+                if(pctmem[pctpos] == '0') videobuffer[ppos / 8] &= ~(1 << 7 - (ppos % 8));
                 x++;
               };
             }
           }
+          memcpy(videoram, videobuffer, 25600);
+          free(videobuffer);
           abortdraw:
           free(pctmem);
         }
