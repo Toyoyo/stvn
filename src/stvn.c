@@ -1,6 +1,6 @@
 /*
  *      STVN Engine
- *      (c) 2022 Toyoyo
+ *      (c) 2022, 2023 Toyoyo
  *
  *      This library is free software; you can redistribute it and/or
  *      modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@
 #include <zlib.h>
 #include <mint/linea.h>
 #include <sys/stat.h>
+
 // Line reading routine, better than I would have done anyway
 #include "line.h"
 
@@ -64,8 +65,6 @@
     }\
   }\
 })
-
-//      write(fd, (char*)videoram, 25600);\
 
 // I definitely use this too much to not actually define it properly
 #define LoadBackground() ({\
@@ -128,15 +127,40 @@ int compare_sprites() {
   return 0;
 }
 
+// Grad' again
+#define DrawVLine(x1, y1, y2) ({\
+  int pt_1 = y1*640 + x1;\
+  int pt_2 = y2*640 + x1;\
+  char* ptr = videoram + (y1 * 640 + x1) / 8;\
+  char* ptr_end = videoram + (y2 * 640 + x1) / 8;\
+  unsigned char mask = 1 << (7 - x1 % 8);\
+  for(; ptr <= ptr_end; ptr += 640 / 8) {\
+    *ptr |= mask;\
+  }\
+})
+
+// Grad' again (bis)
+#define DrawHLine(x1, y1, x2) ({\
+  char *ptr;\
+  char *ptr_end;\
+  ptr = videoram + (y1 * 640 + x1) / 8;\
+  ptr_end = videoram + (y1 * 640 + x2) / 8;\
+  if (ptr == ptr_end) {\
+    *ptr |= ((1 << (8 - x1 % 8)) - 1) & ~((1 << (7 - x2 % 8)) - 1);\
+  } else {\
+    *ptr++ |= (1 << (8 - x1 % 8)) - 1;\
+    while (ptr < ptr_end) {\
+      *ptr++ = 0xff;\
+    }\
+    *ptr |= ~((1 << (7 - x2 % 8)) - 1);\
+  }\
+})
+
 #define RedrawBorder() ({\
-  X1=0; Y1=320; X2=640; Y2=320;\
-  linea3();\
-  X1=0; Y1=399; X2=640; Y2=399;\
-  linea3();\
-  X1=0; Y1=320; X2=0; Y2=399;\
-  linea3();\
-  X1=639; Y1=320; X2=639; Y2=399;\
-  linea3();\
+  DrawHLine(0, 320, 640);\
+  DrawHLine(0, 399, 640);\
+  DrawVLine(0, 320, 399);\
+  DrawVLine(639, 320, 399);\
 })
 
 // non-blocking keyboard reading routine & handling
@@ -183,17 +207,6 @@ int readKeyBoardStatus() {
   }
 }
 
-void DispDialogBorder() {
-  X1=272; Y1=128; X2=392; Y2=128;
-  linea3();
-  X1=272; Y1=224; X2=392; Y2=224;
-  linea3();
-  X1=272; Y1=128; X2=272; Y2=224;
-  linea3();
-  X1=392; Y1=128; X2=392; Y2=224;
-  linea3();
-}
-
 void DispLoading() {
   locate(35,8);
   printf("- Loading -");
@@ -224,14 +237,12 @@ void DispLoading() {
   locate(35,13);
   printf("[q] : quit ");
   fflush(stdout);
-  X1=280; Y1=128; X2=368; Y2=128;
-  linea3();
-  X1=280; Y1=224; X2=368; Y2=224;
-  linea3();
-  X1=280; Y1=128; X2=280; Y2=224;
-  linea3();
-  X1=368; Y1=128; X2=368; Y2=224;
-  linea3();
+
+  char* videoram = Logbase();
+  DrawHLine(280, 128, 368);
+  DrawHLine(280, 224, 368);
+  DrawVLine(280, 128, 224);
+  DrawVLine(368, 128, 224);
 }
 void DispSaving() {
   locate(35,8);
@@ -263,14 +274,12 @@ void DispSaving() {
   locate(35,13);
   printf("[q] : quit");
   fflush(stdout);
-  X1=280; Y1=128; X2=360; Y2=128;
-  linea3();
-  X1=280; Y1=224; X2=360; Y2=224;
-  linea3();
-  X1=280; Y1=128; X2=280; Y2=224;
-  linea3();
-  X1=360; Y1=128; X2=360; Y2=224;
-  linea3();
+
+  char* videoram = Logbase();
+  DrawHLine(280, 128, 360);
+  DrawHLine(280, 224, 360);
+  DrawVLine(280, 128, 224);
+  DrawVLine(360, 128, 224);
 }
 void DispHelp() {
   locate(34,8);
@@ -286,15 +295,12 @@ void DispHelp() {
   locate(34,13);
   printf("[ ] Advance    ");
   fflush(stdout);
-  PTSIN[0] = 272; PTSIN[1] = 128; PTSIN[0] = 392; PTSIN[1] = 128;
-  X1=272; Y1=128; X2=392; Y2=128;
-  linea3();
-  X1=272; Y1=224; X2=392; Y2=224;
-  linea3();
-  X1=272; Y1=128; X2=272; Y2=224;
-  linea3();
-  X1=392; Y1=128; X2=392; Y2=224;
-  linea3();
+
+  char* videoram = Logbase();
+  DrawHLine(272, 128, 392);
+  DrawHLine(272, 224, 392);
+  DrawVLine(272, 128, 224);
+  DrawVLine(392, 128, 224);
 }
 
 // Main function which will run in supervisor mode
@@ -368,10 +374,6 @@ void run() {
   // - Write mode: Replace
   // - Draw last pixel of a line
   // - Bitplane 0 color = black
-  linea0();
-  WMODE=1;
-  LSTLIN=1;
-  COLBIT0=1;
 
   // Let's parse the config file
   if(access("stvn.ini", F_OK) == 0) {
