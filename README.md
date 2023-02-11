@@ -11,8 +11,8 @@ To build this, you need the following:
 
 ## Prerequistes
 * Atari ST (STe if you want to use DMA SNDH files)
-* 1024KiB RAM, since mintlib refuses to init on 512K models. Everyone have 4MiB nowadays, right?
-* Any TOS version should work (tested only on TOS 2.06)
+* 512KiB ST-RAM or more.
+* Any TOS version should work (tested only on TOS 2.06 and EmuTOS)
 
 ## Running
 * Provide a script file following the documented syntax

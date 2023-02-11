@@ -22,18 +22,16 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <vt52.h>
-#include <osbind.h>
-#include <fcntl.h>
 #include <zlib.h>
-#include <mint/linea.h>
-#include <sys/stat.h>
 
 // Line reading routine, better than I would have done anyway
 #include "line.h"
 
 // SNDH routines, including our gcc function call convention wrapper
 #include "sndh.h"
+
+// Misc macros, like Line-a and VT52 stuff
+#include "misc.h"
 
 // Things I kept from the original YM player
 #define locate(x, y) printf("\033Y%c%c", (char)(32 + y), (char)(32 + x))
@@ -46,11 +44,11 @@
     next=readKeyBoardStatus();\
   }\
   if(next!=2) {\
-    snprintf(savefile, 14, "data/sav%d.sav", next-9);\
-    int fd=open(savefile, O_WRONLY | O_CREAT);\
+    snprintf(savefile, 14, "data\\sav%d.sav", next-9);\
+    FILE* fd=fopen(savefile, "w");\
     memcpy(videoram, background, 25600);\
-    if(fd > 0) {\
-      dprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d", savepointer,\
+    if(fd != NULL) {\
+      fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d", savepointer,\
         choicedata[0],\
         choicedata[1],\
         choicedata[2],\
@@ -61,7 +59,7 @@
         choicedata[7],\
         choicedata[8],\
         choicedata[9]);\
-      close(fd);\
+      fclose(fd);\
     }\
   }\
 })
@@ -87,9 +85,9 @@ typedef struct {
   char file[18];
 } sprite;
 
-sprite currentsprites[256];
-sprite previoussprites[256];
-void backup_spritearray() {
+static sprite currentsprites[256];
+static sprite previoussprites[256];
+static void backup_spritearray() {
   int i;
   for(i=0; i<255; i++) {
     previoussprites[i].x = currentsprites[i].x;
@@ -101,7 +99,7 @@ void backup_spritearray() {
     }
   }
 }
-void reset_cursprites() {
+static void reset_cursprites() {
   int i;
   for(i=0; i<255; i++) {
     currentsprites[i].x = 0;
@@ -109,7 +107,7 @@ void reset_cursprites() {
     memset(currentsprites[i].file, 0, 18);
   }
 }
-void reset_prevsprites() {
+static void reset_prevsprites() {
   int i;
   for(i=0; i<255; i++) {
     previoussprites[i].x = 0;
@@ -117,7 +115,7 @@ void reset_prevsprites() {
     memset(previoussprites[i].file, 0, 18);
   }
 }
-int compare_sprites() {
+static int compare_sprites() {
   int i;
   for(i=0; i<255; i++) {
     if(currentsprites[i].x != previoussprites[i].x) return 1;
@@ -163,6 +161,16 @@ int compare_sprites() {
   DrawVLine(639, 320, 399);\
 })
 
+static int fileexists(char* pathname) {
+  int fd=open(pathname, O_RDONLY);
+  if(fd < 0) {
+    return -1;
+  } else {
+    close(fd);
+    return 0;
+  }
+}
+
 // non-blocking keyboard reading routine & handling
 // Space -> read next script line
 // 'q' -> jump to cleanup section & quit
@@ -171,7 +179,7 @@ int compare_sprites() {
 // 's' -> save state
 // Basically line bumber + 10 boolean registers
 __uint32_t key;
-int readKeyBoardStatus() {
+static int readKeyBoardStatus() {
   if (Cconis() != 0L) {
     key = Crawcin();
     if ((char)key == ' ') {
@@ -207,29 +215,29 @@ int readKeyBoardStatus() {
   }
 }
 
-void DispLoading() {
+static void DispLoading() {
   locate(35,8);
   printf("- Loading -");
   locate(35,9);
-  if(access("data/sav1.sav", F_OK) == 0) {
+  if(fileexists("data\\sav1.sav") == 0) {
     printf("1: USED    ");
   } else {
     printf("1: EMPTY   ");
   }
   locate(35,10);
-  if(access("data/sav2.sav", F_OK) == 0) {
+  if(fileexists("data\\sav2.sav") == 0) {
     printf("2: USED    ");
   } else {
     printf("2: EMPTY   ");
   }
   locate(35,11);
-  if(access("data/sav3.sav", F_OK) == 0) {
+  if(fileexists("data\\sav3.sav") == 0) {
     printf("3: USED    ");
   } else {
     printf("3: EMPTY   ");
   }
   locate(35,12);
-  if(access("data/sav4.sav", F_OK) == 0) {
+  if(fileexists("data\\sav4.sav") == 0) {
     printf("4: USED    ");
   } else {
     printf("4: EMPTY   ");
@@ -244,29 +252,30 @@ void DispLoading() {
   DrawVLine(280, 128, 224);
   DrawVLine(368, 128, 224);
 }
-void DispSaving() {
+
+static void DispSaving() {
   locate(35,8);
   printf("- Saving -");
   locate(35,9);
-  if(access("data/sav1.sav", F_OK) == 0) {
+  if(fileexists("data\\sav1.sav") == 0) {
     printf("1: USED   ");
   } else {
     printf("1: EMPTY  ");
   }
   locate(35,10);
-  if(access("data/sav2.sav", F_OK) == 0) {
+  if(fileexists("data\\sav2.sav") == 0) {
     printf("2: USED   ");
   } else {
     printf("2: EMPTY  ");
   }
   locate(35,11);
-  if(access("data/sav3.sav", F_OK) == 0) {
+  if(fileexists("data\\sav3.sav") == 0) {
     printf("3: USED   ");
   } else {
     printf("3: EMPTY  ");
   }
   locate(35,12);
-  if(access("data/sav4.sav", F_OK) == 0) {
+  if(fileexists("data\\sav4.sav") == 0) {
     printf("4: USED   ");
   } else {
     printf("4: EMPTY  ");
@@ -281,7 +290,8 @@ void DispSaving() {
   DrawVLine(280, 128, 224);
   DrawVLine(360, 128, 224);
 }
-void DispHelp() {
+
+static void DispHelp() {
   locate(34,8);
   printf("-    Usage    -");
   locate(34,9);
@@ -304,7 +314,7 @@ void DispHelp() {
 }
 
 // Main function which will run in supervisor mode
-void run() {
+static void run() {
   char *background;
   char textarea[6400] = {0};
   char bgpalette[32] = {0};
@@ -369,14 +379,8 @@ void run() {
   printf(CLEAR_HOME);
   printf(WRAP_OFF);
 
-  //Line-A Setup
-  // - Initialize internal structure
-  // - Write mode: Replace
-  // - Draw last pixel of a line
-  // - Bitplane 0 color = black
-
   // Let's parse the config file
-  if(access("stvn.ini", F_OK) == 0) {
+  if(fileexists("stvn.ini") == 0) {
     config=fopen("stvn.ini", "r");
     line = get_line(config);
     while(line) {
@@ -385,7 +389,7 @@ void run() {
           int filelength=strlen(line)-1;
           if(filelength > 12) filelength=12;
           memset(scriptfile, 0, 18);
-          snprintf(scriptfile, 6, "DATA/");
+          snprintf(scriptfile, 6, "DATA\\");
           memcpy(scriptfile+5, line+1, filelength);
         }
         if(*line == 'B') {
@@ -415,8 +419,9 @@ void run() {
 
   // Our script
   script=fopen(scriptfile, "r");
+
   if(script == NULL) {
-    printf("Opening %s failed.\n", scriptfile);
+    printf("Opening >%s< failed.\n", scriptfile);
     printf("Press any key to quit...\n");
     fflush(stdout);
     Crawcin();
@@ -487,8 +492,8 @@ parseline:
             lblloadsave:
             // Effective loading.
             if(next!=2) {
-              snprintf(savefile, 14, "data/sav%d.sav", next-9);
-              if(access(savefile, F_OK) == 0) {
+              snprintf(savefile, 14, "data\\sav%d.sav", next-9);
+              if(fileexists(savefile) == 0) {
                 int fd=open(savefile, O_RDONLY);
                 char savestate[17] = {0};
                 char save_line[7] = {0};
@@ -511,7 +516,7 @@ parseline:
                 }
 
                 seektoline:
-                //Now, we're going to parse the entire file...
+                // Now, we're going to parse the entire file...
                 rewind(script);
                 lineNumber=0;
                 savepointer=0;
@@ -535,7 +540,7 @@ parseline:
                     int filelen=strlen(line);
                     if(filelen > 12) filelen=12;
                     memset(picture, 0, 18);
-                    snprintf(picture, 6, "DATA/");
+                    snprintf(picture, 6, "DATA\\");
                     memcpy(picture+5, line+1, filelen);
                     reset_cursprites();
                     spritecount=0;
@@ -570,7 +575,7 @@ parseline:
                     int filelen=strlen(line);
                     if(filelen > 12) filelen=12;
                     memset(musicfile, 0, 18);
-                    snprintf(musicfile, 6, "DATA/");
+                    snprintf(musicfile, 6, "DATA\\");
                     memcpy(musicfile+5, line+1, 12);
                     willplaying=1;
                   }
@@ -669,12 +674,12 @@ parseline:
                 }
                 close(fd);
 
-                //Now to display required sprites;
+                // Now to display required sprites;
                 if(compare_sprites() != 0 || loadsave == 1) {
                   int spritecounter=1;
                   if(spritecount > 0) {
                     for(spritecounter=1; spritecounter <= spritecount; spritecounter++) {
-                      snprintf(spritefile, 6, "DATA/");
+                      snprintf(spritefile, 6, "DATA\\");
                       memcpy(spritefile+5, currentsprites[spritecounter-1].file, 12);
                       posx=currentsprites[spritecounter-1].x;
                       posy=currentsprites[spritecounter-1].y;
@@ -705,7 +710,7 @@ parseline:
         int filelen=strlen(line)-1;
         if(filelen > 12) filelen=12;
         memset(picture, 0, 18);
-        snprintf(picture, 6, "DATA/");
+        snprintf(picture, 6, "DATA\\");
         memcpy(picture+5, line+1, filelen);
 
         // In case the 'new' picture is the previous one
@@ -743,7 +748,7 @@ parseline:
         savepointer=lineNumber;
       }
 
-      //'T' : Text line
+      // 'T' : Text line
       // We disabled line wrapping so make sure a line isn't more then 79 characters!
       if(*line == 'T') {
         // Skip already written lines
@@ -760,7 +765,7 @@ parseline:
         int filelen=strlen(line);
         if(filelen > 12) filelen=12;
         memset(musicfile, 0, 18);
-        snprintf(musicfile, 6, "DATA/");
+        snprintf(musicfile, 6, "DATA\\");
         memcpy(musicfile+5, line+1, filelen);
         if(strncmp(musicfile, oldmusicfile, 12) != 0) {
           SNDHTune mytune;
@@ -840,8 +845,8 @@ parseline:
               while(next!=10 && next!=11 && next!=12 && next!=13 && next!=2) {
                 next=readKeyBoardStatus();
               }
-              snprintf(savefile, 14, "data/sav%d.sav", next-9);
-              if(access(savefile, F_OK) == 0) goto lblloadsave;
+              snprintf(savefile, 14, "data\\sav%d.sav", next-9);
+              if(fileexists(savefile) == 0) goto lblloadsave;
               next=0;
               memcpy(videoram, background, 25600);
             }
@@ -867,7 +872,7 @@ parseline:
 
       if(*line == 'D') {
         if(strlen(line+1) < 6) {
-          usleep(atoi(line+1)*1000);
+//          usleep(atoi(line+1)*1000);
         }
       }
 
@@ -884,7 +889,7 @@ parseline:
         int filelen=strlen(line)-7;
         if(filelen > 12) filelen=12;
         memset(spritefile, 0, 18);
-        snprintf(spritefile, 6, "DATA/");
+        snprintf(spritefile, 6, "DATA\\");
         memcpy(spritefile+5, line+7, filelen);
         memcpy(linex, line+1, 3);
         memcpy(liney, line+4, 3);
@@ -896,7 +901,6 @@ parseline:
         spritecount++;
 
         displaysprite:
-
         sprite=gzopen(spritefile,"rb");
         if(sprite != NULL) {
           char* spritedata;
@@ -920,9 +924,7 @@ parseline:
             read(sprfd, &bytes, 4);
             pctsize=bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
           } else {
-            struct stat st;
-            stat(spritefile, &st);
-            pctsize=st.st_size;
+            pctsize=lseek(sprfd, -4, SEEK_END);
           }
           close(sprfd);
 
@@ -939,7 +941,7 @@ parseline:
           // Now for the drawing routine
           for(pctpos=0; pctpos < pctsize; pctpos++) {
 
-            //Horizontal line change!
+            // Horizontal line change!
             if(pctmem[pctpos] == 10) {
               if(posy+y <= 400) {
                 y++;
@@ -975,7 +977,6 @@ parseline:
           isbackfunc=0;
           goto spritedrawn;
         }
-        ;
       }
     }
 
