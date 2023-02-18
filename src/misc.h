@@ -33,3 +33,14 @@
           AND_MEMORY                                                    \
         );                                                              \
 })
+
+// Trvial replacement for access()
+static int fileexists(char* pathname) {
+  int fd=open(pathname, O_RDONLY);
+  if(fd < 0) {
+    return -1;
+  } else {
+    close(fd);
+    return 0;
+  }
+}
