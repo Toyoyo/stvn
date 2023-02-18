@@ -161,16 +161,6 @@ static int compare_sprites() {
   DrawVLine(639, 320, 399);\
 })
 
-static int fileexists(char* pathname) {
-  int fd=open(pathname, O_RDONLY);
-  if(fd < 0) {
-    return -1;
-  } else {
-    close(fd);
-    return 0;
-  }
-}
-
 // non-blocking keyboard reading routine & handling
 // Space -> read next script line
 // 'q' -> jump to cleanup section & quit
@@ -872,7 +862,7 @@ parseline:
 
       if(*line == 'D') {
         if(strlen(line+1) < 6) {
-//          usleep(atoi(line+1)*1000);
+          sleep(atoi(line+1));
         }
       }
 
@@ -936,6 +926,7 @@ parseline:
 
           char *videobuffer=malloc(25600);
           if(videobuffer == NULL) goto abortdraw;
+
           memcpy(videobuffer, videoram, 25600);
 
           // Now for the drawing routine
@@ -968,6 +959,7 @@ parseline:
             }
           }
           memcpy(videoram, videobuffer, 25600);
+
           free(videobuffer);
           abortdraw:
           free(pctmem);
