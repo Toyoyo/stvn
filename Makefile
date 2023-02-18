@@ -27,7 +27,11 @@ libcmini:
 	cd $(LIBCMINI) ; make
 
 zlib:
-	cd $(ZLIB) ; chmod +x ./configure ; CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) ./configure ; make CFLAGS="-O3 -nostdlib -nostdinc -I../../$(LIBCMINI)/include" LDFLAGS="-L../../$(LIBCMINI)/build -lcmini -lgcc" libz.a
+	cd $(ZLIB) ; chmod +x ./configure
+	if [ ! -f "$(ZLIB)/zlib.pc" ]; then\
+		cd $(ZLIB) ; CC=$(CC) AR=$(AR) RANLIB=$(RANLIB) ./configure;\
+	fi
+	cd $(ZLIB) ; make CFLAGS="-O3 -nostdlib -nostdinc -I../../$(LIBCMINI)/include" LDFLAGS="-L../../$(LIBCMINI)/build -lcmini -lgcc" libz.a
 
 sndhisr.o: prepare
 	$(ASM) $(ASMFLAGS) $(SOURCES_DIR)/sndhisr.s -o $(BUILD_DIR)/sndhisr.o
