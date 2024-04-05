@@ -33,22 +33,22 @@ zlib:
 	fi
 	cd $(ZLIB) ; make CFLAGS="-O3 -nostdlib -nostdinc -I../../$(LIBCMINI)/include" LDFLAGS="-L../../$(LIBCMINI)/build -lcmini -lgcc" libz.a
 
-sndhisr.o: prepare
+sndhisr.o:
 	$(ASM) $(ASMFLAGS) $(SOURCES_DIR)/sndhisr.s -o $(BUILD_DIR)/sndhisr.o
 
-sndh.o: prepare
+sndh.o:
 	$(CC) $(CFLAGS) $(SOURCES_DIR)/sndh.c -o $(BUILD_DIR)/sndh.o
 
-stvn.o: prepare
+stvn.o:
 	$(CC) $(CFLAGS) $(SOURCES_DIR)/stvn.c -o $(BUILD_DIR)/stvn.o
 
-line.o: prepare
+line.o:
 	$(CC) $(CFLAGS) $(SOURCES_DIR)/line.c -o $(BUILD_DIR)/line.o
 
 main: stvn.o line.o sndh.o sndhisr.o
 	$(CC) -nostdlib $(LIBCMINI)/build/crt0.o \
-	      $(BUILD_DIR)/*.o \
-		  -o $(BUILD_DIR)/stvn.prg $(LDFLAGS);
+		$(BUILD_DIR)/*.o \
+		-o $(BUILD_DIR)/stvn.prg $(LDFLAGS);
 
 dist: main
 	mkdir -p $(DIST_DIR)
