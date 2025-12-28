@@ -23,33 +23,33 @@
 ;
 
 ; -- Declaring ASM functions to be called from C        
-        XDEF    _SNDH_PlayTuneISR
-        XDEF    _SNDH_StopTuneISR
+        XDEF    SNDH_PlayTuneISR
+        XDEF    SNDH_StopTuneISR
 
 	TEXT
 
 ; *** initialize Timer C to replay the given SNDH ***
 ; parameters:  a0  ptr to SNDH  d0.w replay frequency      d1.w subtune to play
-_SNDH_PlayTuneISR:
-	lea	sndhpoi(pc),a1
-	move.l	a0,(a1)+		; start of sndh
-	move.w	d0,(a1)+ 		; replay freq
-	move.w	d1,d0			; subtune
-	move.b	$484.w,(a1)+
-	clr.b	$484.w			;keyclick off
-	move.l	#$08000000,$ffff8800.w	;die
+SNDH_PlayTuneISR:
+	lea	sndhpoi(pc),a0
+	move.l	4(sp),(a0)+	  	    ; start of sndh
+	move.w	10(sp),(a0)+ 		; replay freq
+	move.w	14(sp),d0			; subtune
+	move.b	$484.w,(a0)+
+	clr.b	$484.w			    ;keyclick off
+	move.l	#$08000000,$ffff8800.w	;die YM2149
 	move.l	#$09000000,$ffff8800.w	;die
 	move.l	#$0A000000,$ffff8800.w	;die ;)
 	move.l	sndhpoi(pc),a0
-	jsr	(a0)			;sndh init
+	jsr	(a0)			        ;sndh init (with subtune in d0)
 	lea	oldtc(pc),a0
 	move.l	$114.w,(a0)		;store old timer c
 	lea	newtc(pc),a0
-	move.l	a0,$114.w 		;new timer c vector
+	move.l	a0,$114.w 		    ;new timer c vector
     rts
 
 ; *** stop current active SNDH replay ISR ***
-_SNDH_StopTuneISR:
+SNDH_StopTuneISR:
 	move.l	oldtc(pc),$114.w	;restore timer c
 	move.l	sndhpoi(pc),a0
 	jsr	4(a0) 			;sndh deinit

@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <zlib.h>
+#include <ext.h>
 
 // Line reading routine, better than I would have done anyway
 #include "line.h"
@@ -129,8 +130,8 @@ static int compare_sprites() {
 #define DrawVLine(x1, y1, y2) ({\
   int pt_1 = y1*640 + x1;\
   int pt_2 = y2*640 + x1;\
-  char* ptr = videoram + (y1 * 640 + x1) / 8;\
-  char* ptr_end = videoram + (y2 * 640 + x1) / 8;\
+  unsigned char* ptr = videoram + (y1 * 640 + x1) / 8;\
+  unsigned char* ptr_end = videoram + (y2 * 640 + x1) / 8;\
   unsigned char mask = 1 << (7 - x1 % 8);\
   for(; ptr <= ptr_end; ptr += 640 / 8) {\
     *ptr |= mask;\
@@ -139,8 +140,8 @@ static int compare_sprites() {
 
 // Grad' again (bis)
 #define DrawHLine(x1, y1, x2) ({\
-  char *ptr;\
-  char *ptr_end;\
+  unsigned char *ptr;\
+  unsigned char *ptr_end;\
   ptr = videoram + (y1 * 640 + x1) / 8;\
   ptr_end = videoram + (y1 * 640 + x2) / 8;\
   if (ptr == ptr_end) {\
@@ -378,7 +379,7 @@ static void run() {
         if(*line == 'S') {
           int filelength=strlen(line)-1;
           if(filelength > 12) filelength=12;
-          memset(scriptfile, 0, 18);
+          memset(scriptfile, 0, 13);
           snprintf(scriptfile, 6, "DATA\\");
           memcpy(scriptfile+5, line+1, filelength);
         }

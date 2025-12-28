@@ -8,14 +8,14 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <osbind.h>
+#include <mint/osbind.h>
 #include "lib.h"
 
 int remove(const char *filename)
 {
 	int ret = Ddelete(filename);
 
-	if (ret == ENOTDIR)
+	if (ret == -ENOTDIR)
 	{
 		ret = Fdelete(filename);
 	}

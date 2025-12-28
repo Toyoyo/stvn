@@ -17,19 +17,19 @@ all:$(patsubst %,%/$(APP),$(TRGTDIRS))
 
 #
 # ONLY_68K: for faster developing; set to Y to build only the 68000 library
-# BUILD_CF: Build ColfFire binaries.
+# BUILD_CF: Build ColdFire binaries.
 #
 ONLY_68K=Y
 BUILD_CF=Y
-BUILD_FAST=Y
+BUILD_FAST=$(shell if $(CC) -mfastcall -E - < /dev/null >/dev/null 2>&1; then echo Y; else echo N; fi)
 BUILD_SOFT_FLOAT=Y
 BUILD_SHORT=Y
-COMPILE_ELF=N
+COMPILE_ELF=Y
 STDIO_WITH_LONG_LONG=N
 
 ifneq (,$(filter $(COMPILE_ELF),Y yes))
-	CROSSPREFIX=m68k-elf-
-else 
+	CROSSPREFIX=m68k-atari-mintelf-
+else
   	CROSSPREFIX=m68k-atari-mint-
 endif
 
@@ -57,9 +57,9 @@ endif
 
 STARTUP= \
 	$(SRCDIR)/crt0.S
-	
+
 CSRCS= $(wildcard $(SRCDIR)/*.c)
-	
+
 ASRCS= $(filter-out $(SRCDIR)/crt0.S $(SRCDIR)/minicrt0.S, $(wildcard $(SRCDIR)/*.S))
 
 SRCDIR=sources
@@ -96,19 +96,18 @@ OBJS=$(COBJS) $(AOBJS)
 
 IIO_OBJS = doprnt.o $(filter %printf.o, $(patsubst %,../%,$(OBJS)))
 
-START_OBJ=crt0.o
 LIBC=libcmini.a
 LIBIIO=libiiomini.a
 
 LIBS=$(patsubst %,%/$(LIBC),$(LIBDIRS))
 LIBSIIO=$(patsubst %,%/$(LIBIIO),$(LIBDIRS))
-STARTUPS=$(BUILDDIR)/$(START_OBJ) $(BUILDDIR)/minicrt0.o
+STARTUPS=$(patsubst %,%/crt0.o,$(OBJDIRS)) $(patsubst %,%/minicrt0.o,$(OBJDIRS))
 
 TESTS:= $(shell ls tests | grep -E -v '^(CVS)$$')
 
 all: dirs libs startups tests
 libs: $(LIBS) $(LIBSIIO)
-	
+
 dirs::
 	$(Q)mkdir -p $(LIBDIRS) $(OBJDIRS)
 
@@ -118,7 +117,7 @@ startups: $(STARTUPS)
 ifeq (,$(filter $(ONLY_68K),Y yes))
 tests:
 	$(Q)echo make tests
-	$(Q)for i in $(TESTS); do if test -e tests/$$i/Makefile ; then $(MAKE) -C tests/$$i || { exit 1;} fi; done;
+	$(Q)for i in $(TESTS); do if test -e tests/$$i/Makefile ; then $(MAKE) -C tests/$$i COMPILE_ELF=$(COMPILE_ELF) || { exit 1;} fi; done;
 else
 tests:
 endif
@@ -134,7 +133,7 @@ all:$(patsubst %,%/$(APP),$(TRGTDIRS))
 # multilib flags
 #
 define MULTILIBFLAGS_TEMPLATE
-$(BUILDDIR)/$(1)/%.a : CFLAGS += $(call MULTILIBFLAGS,$(1))
+$(BUILDDIR)/$(1)/%: CFLAGS += $(call MULTILIBFLAGS,$(1))
 endef
 $(foreach DIR,$(MULTILIBDIRS),$(eval $(call MULTILIBFLAGS_TEMPLATE,$(DIR))))
 
@@ -245,6 +244,7 @@ ifneq (,$(PREFIX)$(PREFIX_FOR_INCLUDE)$(PREFIX_FOR_LIB)$(PREFIX_FOR_STARTUP))
 		endif
 	endif
 else
+	PREFIX_FOR_INCLUDE = $(DESTDIR)/usr/include
 	PREFIX_FOR_LIB = $(DESTDIR)/usr/lib
 	PREFIX_FOR_STARTUP = $(DESTDIR)/usr/lib
 endif
@@ -253,7 +253,7 @@ ifneq (,$(PREFIX_FOR_INCLUDE))
 install : install-include
 install-include:
 	@mkdir -pv $(PREFIX_FOR_INCLUDE)
-	@cp -arv include/* $(PREFIX_FOR_INCLUDE)
+	@cp -av include/* $(PREFIX_FOR_INCLUDE)
 endif
 
 ifneq (,$(PREFIX_FOR_LIB))
@@ -268,8 +268,19 @@ endif
 ifneq (,$(PREFIX_FOR_STARTUP))
 install : install-startup
 install-startup:
+ifneq (,$(filter $(COMPILE_ELF),Y yes))
+	# the startup code is identical in all cases,
+	# but for ELF we still have to install separate versions,
+	# otherwise the linker will complain about incompatible machines
+	@for i in $(MULTILIBDIRS); do \
+		mkdir -pv $(PREFIX_FOR_STARTUP)/$$i; \
+		cp -av $(BUILDDIR)/$$i/objs/crt0.o $(BUILDDIR)/$$i/objs/minicrt0.o $(PREFIX_FOR_STARTUP)/$$i; \
+	done
+else
+	# for a.out, we can just use a single version
 	@mkdir -pv $(PREFIX_FOR_STARTUP)
-	@cp -av $(STARTUPS) $(PREFIX_FOR_STARTUP)
+	@cp -av $(BUILDDIR)/objs/crt0.o $(BUILDDIR)/objs/minicrt0.o $(PREFIX_FOR_STARTUP)
+endif
 endif
 
 ifneq (clean,$(MAKECMDGOALS))

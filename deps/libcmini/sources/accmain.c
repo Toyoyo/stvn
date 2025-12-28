@@ -31,6 +31,12 @@ static void _main (int _argc, char **_argv, char **_envp)
 }
 
 
+/*
+ * A frame-pointer is useless here,
+ * because we change the stack inside those functions.
+ */
+#pragma GCC optimize "-fomit-frame-pointer"
+
 void _acc_main(void) {
 	void *_heapbase;
 	
@@ -51,8 +57,16 @@ void _acc_main(void) {
 	_heapbase = (void *)Malloc(_stksize);
 	_setstack((char *) _heapbase + _stksize);
 
+	/* local variables must not be accessed after this point,
+	   because we just changed the stack */
+
 	/* this is an accessory */
 	_app = 0;
+
+#ifdef __GCC_HAVE_INITFINI_ARRAY_SUPPORT
+	/* main() won't call __main() for global constructors, so do it here. */
+	__main();
+#endif
 
 	_main(__libc_argc, __libc_argv, NULL);
 	/*NOTREACHED*/

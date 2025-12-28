@@ -38,20 +38,6 @@ char*		SNDH_FindWordInHeader(char* chunk, char *tag);
 unsigned short	SNDH_ParseDecimal(char *chunk);
 unsigned char	SNDH_IsTunePlaying(void);
 
-static inline void SNDH_PlayTuneISR_II(void *tuneptr, unsigned short freq, unsigned short subtune)
-{
-	asm volatile
-	(
-		"move.l	%0,%%a0\n\t"
-		"move.w	%1,%%d0\n\t"
-		"move.w	%2,%%d1\n\t"
-		"jsr	_SNDH_PlayTuneISR"
-	:
-	: "r"(tuneptr), "r"(freq), "r"(subtune)
-	: "%a0", "%d0", "%d1", "cc", "memory"
-	);
-}
-
 /* functions */
 void SNDH_GetTuneInfo(void *tuneptr, SNDHTune *tune)
 {
@@ -124,7 +110,7 @@ void SNDH_PlayTune(SNDHTune *tune, unsigned short subtune)
 	if(tune->tuneadr != NULL)
 	{
 		SNDH_ActiveTune = tune;
-		SNDH_PlayTuneISR_II(tune->tuneadr, tune->freq, subtune);
+		SNDH_PlayTuneISR(tune->tuneadr, tune->freq, subtune);
 	}
 	return;
 }

@@ -5,7 +5,7 @@ RSC_DIR=./rsc
 LIBCMINI=./deps/libcmini
 ZLIB=./deps/zlib-1.3.1
 
-CROSS=m68k-atari-mint-
+CROSS=m68k-atari-mintelf-
 CC=$(CROSS)gcc
 AR=$(CROSS)ar
 RANLIB=$(CROSS)ranlib
@@ -14,7 +14,7 @@ LDFLAGS=-s -Wl,--gc-sections -fomit-frame-pointer $(ZLIB)/libz.a -L$(LIBCMINI)/b
 
 # VASM PARAMETERS
 ASM=vasmm68k_mot
-ASMFLAGS=-Faout -quiet -x -m68000 -spaces -showopt
+ASMFLAGS=-Felf -quiet -x -m68000 -spaces -showopt
 
 all: prepare libcmini zlib dist compress
 
@@ -46,14 +46,14 @@ line.o:
 	$(CC) $(CFLAGS) $(SOURCES_DIR)/line.c -o $(BUILD_DIR)/line.o
 
 main: stvn.o line.o sndh.o sndhisr.o
-	$(CC) -nostdlib $(LIBCMINI)/build/crt0.o \
+	$(CC) -nostdlib $(LIBCMINI)/build/objs/crt0.o \
 		$(BUILD_DIR)/*.o \
 		-o $(BUILD_DIR)/stvn.prg $(LDFLAGS);
 
 dist: main
 	mkdir -p $(DIST_DIR)
 	cp $(BUILD_DIR)/stvn.prg $(DIST_DIR)
-	m68k-atari-mint-strip -s $(DIST_DIR)/stvn.prg
+	$(CROSS)strip -s $(DIST_DIR)/stvn.prg
 	cp -R $(RSC_DIR)/* $(DIST_DIR)
 
 compress:

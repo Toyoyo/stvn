@@ -1,6 +1,6 @@
 #include <string.h>
 #include <time.h>
-#include <osbind.h>
+#include <mint/osbind.h>
 #include <sys/time.h>
 
 
@@ -44,11 +44,12 @@ size_t strftime(char *s, size_t smax, const char *fmt, const struct tm *tp)
 	{
 		if (*fmt == '%')
 		{
-			const char *addstr = NULL;
 			int addlen = -1;
 			char addval[80];
+			const char *addstr = addval;
 			int week;
 
+			addval[0] = '\0';
 			switch (*++fmt)
 			{
 			case 'a':
@@ -61,7 +62,7 @@ size_t strftime(char *s, size_t smax, const char *fmt, const struct tm *tp)
 				{
 					addstr = "?";
 					addlen = -1;
-				} else 
+				} else
 				{
 					addstr = wday_name[tp->tm_wday];
 				}
@@ -158,17 +159,16 @@ size_t strftime(char *s, size_t smax, const char *fmt, const struct tm *tp)
 				break;
 
 			case 'w':
-				addval[0] = '0' + (tp->tm_wday / 10);
-				addval[1] = '0' + (tp->tm_wday % 10);
-				addval[2] = '\0';
+				addval[0] = '0' + (tp->tm_wday % 10);
+				addval[1] = '\0';
 				break;
 
 			case 'X':
-				strftime(addval, 80, "%d.%m.%Y", tp);
+				strftime(addval, 80, "%H:%M:%S", tp);
 				break;
 
 			case 'x':
-				strftime(addval, 80, "%H:%M:%S", tp);
+				strftime(addval, 80, "%d.%m.%Y", tp);
 				break;
 
 			case 'y':
@@ -198,11 +198,6 @@ size_t strftime(char *s, size_t smax, const char *fmt, const struct tm *tp)
 				addval[1] = *fmt;
 				addval[2] = '\0';
 				break;
-			}
-
-			if (addstr == NULL)
-			{
-				addstr = addval;
 			}
 
 			if (*addstr != '\0')

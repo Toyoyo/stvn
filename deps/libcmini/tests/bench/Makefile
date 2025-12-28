@@ -6,10 +6,15 @@ endif
 
 CROSS=Y
 
+ifneq (,$(filter $(COMPILE_ELF),Y yes))
+CROSSBINDIR_IS_Y=m68k-atari-mintelf-
+else
 CROSSBINDIR_IS_Y=m68k-atari-mint-
+endif
 CROSSBINDIR_IS_N=
 
-#BUILD_CF=N
+BUILD_CF=N
+BUILD_FAST=$(shell if $(CC) -mfastcall -E - < /dev/null >/dev/null 2>&1; then echo Y; else echo N; fi)
 
 CROSSBINDIR=$(CROSSBINDIR_IS_$(CROSS))
 
@@ -35,8 +40,6 @@ CC=$(CROSSBINDIR)gcc
 STRIP=$(CROSSBINDIR)strip
 STACK=$(CROSSBINDIR)stack
 
-BUILD_FAST=$(shell if $(CC) -mfastcall -E - < /dev/null >/dev/null 2>&1; then echo Y; else echo N; fi)
-
 APP=bench.ttp
 TEST_APP=$(APP)
 
@@ -57,39 +60,36 @@ COBJS=$(patsubst $(SRCDIR)/%.o,%.o,$(patsubst %.c,%.o,$(CSRCS)))
 AOBJS=$(patsubst $(SRCDIR)/%.o,%.o,$(patsubst %.S,%.o,$(ASRCS)))
 OBJS=$(COBJS) $(AOBJS)
 
-ifeq ($(BUILD_FAST), Y)
-#ifeq ($(BUILD_CF), Y)
-#TRGTDIRS=. ./m68020-60 ./m5475 ./mshort ./m68020-60/mshort ./m5475/mshort ./mfastcall ./m68020-60/mfastcall ./mshort/mfastcall ./m68020-60/mshort/mfastcall
-#else
-TRGTDIRS=. ./m68020-60 ./mshort ./m68020-60/mshort ./mfastcall ./m68020-60/mfastcall ./mshort/mfastcall ./m68020-60/mshort/mfastcall
-#endif
-else
-#ifeq ($(BUILD_CF), Y)
-#TRGTDIRS=. ./m68020-60 ./m5475 ./mshort ./m68020-60/mshort ./m5475/mshort
-#else
 TRGTDIRS=. ./m68020-60 ./mshort ./m68020-60/mshort
-#endif
+ifeq ($(BUILD_FAST), Y)
+	TRGTDIRS += ./mfastcall ./m68020-60/mfastcall ./mshort/mfastcall ./m68020-60/mshort/mfastcall
+endif
+ifeq ($(BUILD_CF), Y)
+	TRGTDIRS += ./m5475 ./m5475/mshort
+	ifeq ($(BUILD_FAST), Y)
+	TRGTDIRS += ./m5475/mfastcall ./m5475/mshort/mfastcall
+	endif
 endif
 OBJDIRS=$(patsubst %,%/objs,$(TRGTDIRS))
+
+all: dirs $(patsubst %,%/$(APP),$(TRGTDIRS))
 
 #
 # multilib flags. These must match m68k-atari-mint-gcc -print-multi-lib output
 #
-m68020-60/$(APP):CFLAGS += -m68020-60
-#m5475/$(APP):CFLAGS += -mcpu=5475
-mshort/$(APP):CFLAGS += -mshort
+m68020-60/$(APP): CFLAGS += -m68020-60
+m5475/$(APP): CFLAGS += -mcpu=5475
+mshort/$(APP): CFLAGS += -mshort
 m68020-60/mshort/$(APP): CFLAGS += -m68020-60 -mshort
-#m5475/mshort/$(APP): CFLAGS += -mcpu=5475 -mshort
-ifeq ($(BUILD_FAST), Y)
-mfastcall/$(APP):CFLAGS += -mfastcall
-m68020-60/mfastcall/$(APP):CFLAGS += -m68020-60 -mfastcall
-mshort/mfastcall/$(APP):CFLAGS += -mshort -mfastcall
+m5475/mshort/$(APP): CFLAGS += -mcpu=5475 -mshort
+m5475/mshort/mfastcall/$(APP): CFLAGS += -mcpu=5475 -mshort -mfastcall
+m5475/mfastcall/$(APP): CFLAGS += -mcpu=5475 -mfastcall
+mfastcall/$(APP): CFLAGS += -mfastcall
+m68020-60/mfastcall/$(APP): CFLAGS += -m68020-60 -mfastcall
+mshort/mfastcall/$(APP): CFLAGS += -mshort -mfastcall
 m68020-60/mshort/mfastcall/$(APP): CFLAGS += -m68020-60 -mshort -mfastcall
-endif
 
 MULTILIBDIRECTORY = `$(CC) $$(CFLAGS) -print-multi-directory`
-
-all: dirs $(patsubst %,%/$(APP),$(TRGTDIRS))
 
 dirs::
 	mkdir -p $(TRGTDIRS) $(OBJDIRS)
@@ -125,7 +125,7 @@ $(1)/%.o:$(SRCDIR)/%.S
 $(1)_OBJS=$(patsubst %,$(1)/objs/%,$(OBJS))
 $(1)/$(APP): $$($(1)_OBJS)
 	$(Q)echo "CC $$(@)"
-	$(Q)$(CC) $$(CFLAGS) -Wl,-Map,$(1)/mapfile -o $$@ ../../build/crt0.o $$($(1)_OBJS) -L../../build/$(MULTILIBDIRECTORY) $(LIBS)
+	$(Q)$(CC) $$(CFLAGS) -Wl,-Map,$(1)/mapfile -o $$@ ../../build/$(1)/objs/crt0.o $$($(1)_OBJS) -L../../build/$(1) $(LIBS)
 	$(Q)$(STRIP) $$@
 endef
 $(foreach DIR,$(TRGTDIRS),$(eval $(call CC_TEMPLATE,$(DIR))))
