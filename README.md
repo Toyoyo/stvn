@@ -6,7 +6,7 @@ A very simple visual novel engine for Atari ST on monochrome high-res mode.
 ## Building
 To build this, you need the following:
 * GNU make
-* m68k-atari-mint gcc toolchain
+* m68k-atari-mintelf gcc toolchain
 * vasmm68k_mot
 
 ## Prerequistes
