@@ -325,7 +325,7 @@ static void run() {
   int willplaying=0;
   int next;
   char *choicedata;
-  char jumplabel[5] = {0};
+  char jumplabel[7] = {0};
   char savefile[14] = {0};
   long savepointer = 0;
   long save_linenb = 0;
@@ -577,18 +577,25 @@ parseline:
 
                   // We also beed to replay the 'B' Lines
                   if(*line == 'B') {
-                    if(strlen(line) == 6) {
+                    if(strlen(line) == 8) {
                       char lineregister[2] = {0};
                       memcpy(lineregister, line+1, 1);
                       char selectedregister=atoi(lineregister);
-                      if(choicedata[selectedregister] == 1) {
-                        memcpy(jumplabel, line+2, 4);
+
+                      char linechoice[2] = {0};
+                      memcpy(linechoice, line+2, 1);
+                      char selectedchoice=atoi(linechoice);
+                      if(selectedchoice > 3) selectedchoice=3;
+                      if(selectedchoice < 0) selectedchoice=0;
+
+                      if(choicedata[selectedregister] == selectedchoice) {
+                        memcpy(jumplabel, line+3, 6);
                         while(1) {
                           line = get_line(script);
                           if(line == NULL) goto endprog;
                           lineNumber = lineNumber + 1;
                           if(strlen(line) >= 4) {
-                            if(strncmp(jumplabel, line, 4) == 0) {
+                            if(strncmp(jumplabel, line, 5) == 0) {
                               goto btestend;
                             }
                           }
@@ -598,25 +605,24 @@ parseline:
                       }
                     }
                   }
-                }
 
-                // And probably 'J' Lines too.
-                if(*line == 'J') {
-                  if(strlen(line) >= 5) {
-                    memcpy(jumplabel, line+1, 4);
-                    while(1) {
-                      line = get_line(script);
-                      if(line == NULL) goto endprog;
-                      lineNumber = lineNumber + 1;
-                      if(strlen(line) >= 4) {
-                        if(strncmp(jumplabel, line, 4) == 0) goto jend;
+                  // And probably 'J' Lines too.
+                  if(*line == 'J') {
+                    if(strlen(line) >= 6) {
+                      memcpy(jumplabel, line+1, 5);
+                      while(1) {
+                       line = get_line(script);
+                       if(line == NULL) goto endprog;
+                       lineNumber = lineNumber + 1;
+                       if(strlen(line) >= 5) {
+                         if(strncmp(jumplabel, line, 5) == 0) goto jend;
+                        }
                       }
                     }
+                    jend:
+                   ;
                   }
-                  jend:
-                  ;
                 }
-
                 // We should have everything we need, now let's restorethings
 
                 // Let's explain things:
@@ -781,15 +787,15 @@ parseline:
       // 'J' : Jump to label
       // Mostly useful for 'B'+'J' combos, but 'B' and 'C' lines will jump here.
       if(*line == 'J') {
-        if(strlen(line) >= 5) {
-          memcpy(jumplabel, line+1, 4);
+        if(strlen(line) >= 6) {
+          memcpy(jumplabel, line+1, 5);
           jumptolabel:
           while(1) {
             line = get_line(script);
             if(line == NULL) goto endprog;
             lineNumber = lineNumber + 1;
-            if(strlen(line) >= 4) {
-              if(strncmp(jumplabel, line, 4) == 0) {
+            if(strlen(line) >= 5) {
+              if(strncmp(jumplabel, line, 5) == 0) {
                 break;
               }
             }
@@ -797,14 +803,31 @@ parseline:
         }
       }
 
+      // Jump to start
+      if(*line == 'F') {
+         rewind(script);
+         lineNumber=0;
+         savepointer=0;
+         prevLineNumber=0;
+         willplaying=0;
+         spritecount=0;
+      }
+
       // 'B' : Jump to label if register is set
       if(*line == 'B') {
-        if(strlen(line) == 6) {
+        if(strlen(line) == 8) {
           char lineregister[2] = {0};
           memcpy(lineregister, line+1, 1);
           char selectedregister=atoi(lineregister);
-          if(choicedata[selectedregister] == 1) {
-            memcpy(jumplabel, line+2, 4);
+
+          char linechoice[2] = {0};
+          memcpy(linechoice, line+2, 1);
+          char selectedchoice=atoi(linechoice);
+          if(selectedchoice > 3) selectedchoice=3;
+          if(selectedchoice < 0) selectedchoice=0;
+
+          if(choicedata[selectedregister] == selectedchoice) {
+            memcpy(jumplabel, line+3, 6);
             goto jumptolabel;
           }
         }
@@ -814,13 +837,19 @@ parseline:
       // We also want the same kind of interaction we have with 'W' lines
       // Users *will* want to save before making a choice
       if(*line == 'C') {
-        if(strlen(line) == 2) {
+        if(strlen(line) == 3) {
           char lineregister[2] = {0};
           memcpy(lineregister, line+1, 1);
           char selectedregister=atoi(lineregister);
 
+          char linechoice[2] = {0};
+          memcpy(linechoice, line+2, 1);
+          char maxchoice=atoi(linechoice);
+          if(maxchoice > 4) maxchoice=4;
+          if(maxchoice < 2) maxchoice=2;
+
           next=readKeyBoardStatus();
-          while(next!=10 && next!=11) {
+          while(!(next>=10 && next<=(9+maxchoice))) {
             next=readKeyBoardStatus();
             if(next == 2) goto endprog;
             if(next == 3) {

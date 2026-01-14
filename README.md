@@ -111,7 +111,11 @@ Supported operands:
 
   Key '2' entered: store 1
 
-  Syntax: ``C[register number]`` like ``C0``
+  Key '3' entered: store 2
+
+  Key '4' entered: store 3
+
+  Syntax: ``C[register number][Max choices]`` like ``C04`` meaning "Get a choice between 1 and 4 and assign it to register 0"
 
   Also offer the same interactions as a 'W' line.
 
@@ -123,7 +127,7 @@ Supported operands:
 
 * 'B' : Jump to label if register is set.
 
-  Syntax: ``B[register number][label]`` like ``B0LBL1``
+  Syntax: ``B[register number][Choice][label]`` like ``B02LBL1`` meaning "if register 0 is at 2, jump to LBL1"
 
 * 'D' : Wait the specified number of milliseconds (max 99999).
 
