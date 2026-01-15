@@ -594,7 +594,7 @@ parseline:
                           line = get_line(script);
                           if(line == NULL) goto endprog;
                           lineNumber = lineNumber + 1;
-                          if(strlen(line) >= 4) {
+                          if(strlen(line) >= 5) {
                             if(strncmp(jumplabel, line, 5) == 0) {
                               goto btestend;
                             }
