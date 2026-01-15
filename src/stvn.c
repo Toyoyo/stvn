@@ -102,7 +102,7 @@ static void backup_spritearray() {
 }
 static void reset_cursprites() {
   int i;
-  for(i=0; i<255; i++) {
+  for(i=0; i<=255; i++) {
     currentsprites[i].x = 0;
     currentsprites[i].y = 0;
     memset(currentsprites[i].file, 0, 18);
@@ -110,7 +110,7 @@ static void reset_cursprites() {
 }
 static void reset_prevsprites() {
   int i;
-  for(i=0; i<255; i++) {
+  for(i=0; i<=255; i++) {
     previoussprites[i].x = 0;
     previoussprites[i].y = 0;
     memset(previoussprites[i].file, 0, 18);
@@ -118,7 +118,7 @@ static void reset_prevsprites() {
 }
 static int compare_sprites() {
   int i;
-  for(i=0; i<255; i++) {
+  for(i=0; i<=255; i++) {
     if(currentsprites[i].x != previoussprites[i].x) return 1;
     if(currentsprites[i].y != previoussprites[i].y) return 1;
     if(strncmp(currentsprites[i].file, previoussprites[i].file, 18) != 0) return 1;
@@ -563,13 +563,16 @@ parseline:
 
                   // And the lastmusicfile
                   if(*line == 'P') {
-                    int filelen=strlen(line);
-                    if(filelen > 12) filelen=12;
-                    memset(musicfile, 0, 18);
-                    snprintf(musicfile, 6, "DATA\\");
-                    memcpy(musicfile+5, line+1, 12);
-                    willplaying=1;
+                    int filelen=strlen(line)-1;
+                    if(filelen > 0) {
+                      if(filelen > 12) filelen=12;
+                      memset(musicfile, 0, 18);
+                      snprintf(musicfile, 6, "DATA\\");
+                      memcpy(musicfile+5, line+1, filelen);
+                      willplaying=1;
+                    }
                   }
+
                   if(*line == 'S') {
                     prevLineNumber = savepointer;
                     savepointer=lineNumber;
@@ -705,19 +708,21 @@ parseline:
       // 'I' : Change background image
       if(*line == 'I') {
         int filelen=strlen(line)-1;
-        if(filelen > 12) filelen=12;
-        memset(picture, 0, 18);
-        snprintf(picture, 6, "DATA\\");
-        memcpy(picture+5, line+1, filelen);
+        if(filelen > 0) {
+          if(filelen > 12) filelen=12;
+          memset(picture, 0, 18);
+          snprintf(picture, 6, "DATA\\");
+          memcpy(picture+5, line+1, filelen);
 
-        // In case the 'new' picture is the previous one
-        // Don't waste cycles for nothing
-        if(strncmp(picture, oldpicture, 18) != 0) {
-          LoadBackground();
+          // In case the 'new' picture is the previous one
+          // Don't waste cycles for nothing
+          if(strncmp(picture, oldpicture, 18) != 0) {
+           LoadBackground();
+          }
+          reset_cursprites();
+          spritecount=0;
+          charlines=0;
         }
-        reset_cursprites();
-        spritecount=0;
-        charlines=0;
       }
 
       if(*line == 'R') {
@@ -759,27 +764,29 @@ parseline:
       // 'P' : Change music
       // The SNDH routine MUST be stopped ONLY if there's already one playing.
       if(*line == 'P') {
-        int filelen=strlen(line);
-        if(filelen > 12) filelen=12;
-        memset(musicfile, 0, 18);
-        snprintf(musicfile, 6, "DATA\\");
-        memcpy(musicfile+5, line+1, filelen);
-        if(strncmp(musicfile, oldmusicfile, 12) != 0) {
-          SNDHTune mytune;
-          memcpy(oldmusicfile, musicfile, 12);
+        int filelen=strlen(line)-1;
+        if(filelen > 0) {
+          if(filelen > 12) filelen=12;
+          memset(musicfile, 0, 18);
+          snprintf(musicfile, 6, "DATA\\");
+          memcpy(musicfile+5, line+1, filelen);
+          if(strncmp(musicfile, oldmusicfile, 12) != 0) {
+            SNDHTune mytune;
+            memcpy(oldmusicfile, musicfile, 12);
 
-          if(isplaying == 1) SNDH_StopTune();
-          isplaying=0;
-          sndfile=gzopen(musicfile,"rb");
-
-          if(sndfile != NULL) {
-            gzread(sndfile, tuneptr, sndhbuffersize);
-            gzclose(sndfile);
-            SNDH_GetTuneInfo(tuneptr,&mytune);
-            SNDH_PlayTune(&mytune,0);
-            isplaying=1;
-          } else {
+            if(isplaying == 1) SNDH_StopTune();
             isplaying=0;
+            sndfile=gzopen(musicfile,"rb");
+
+            if(sndfile != NULL) {
+              gzread(sndfile, tuneptr, sndhbuffersize);
+              gzclose(sndfile);
+              SNDH_GetTuneInfo(tuneptr,&mytune);
+              SNDH_PlayTune(&mytune,0);
+              isplaying=1;
+            } else {
+              isplaying=0;
+            }
           }
         }
       }
