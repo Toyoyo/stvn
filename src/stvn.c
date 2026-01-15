@@ -679,8 +679,9 @@ parseline:
                   int spritecounter=1;
                   if(spritecount > 0) {
                     for(spritecounter=1; spritecounter <= spritecount; spritecounter++) {
+                      memset(spritefile, 0, sizeof(spritefile));
                       snprintf(spritefile, 6, "DATA\\");
-                      memcpy(spritefile+5, currentsprites[spritecounter-1].file, 12);
+                      memcpy(spritefile+5, currentsprites[spritecounter-1].file, strlen(currentsprites[spritecounter-1].file));
                       posx=currentsprites[spritecounter-1].x;
                       posy=currentsprites[spritecounter-1].y;
                       isbackfunc=1;
@@ -914,97 +915,98 @@ parseline:
         if(strlen(line) < 8) goto endsprite;
 
         int filelen=strlen(line)-7;
-        if(filelen > 12) filelen=12;
-        memset(spritefile, 0, 18);
-        snprintf(spritefile, 6, "DATA\\");
-        memcpy(spritefile+5, line+7, filelen);
-        memcpy(linex, line+1, 3);
-        memcpy(liney, line+4, 3);
-        posx=atoi(linex);
-        posy=atoi(liney);
-        currentsprites[spritecount].x=atoi(linex);
-        currentsprites[spritecount].y=atoi(liney);
-        memcpy(currentsprites[spritecount].file, line+7, filelen);
-        spritecount++;
+        if(filelen > 0) {
+          if(filelen > 12) filelen=12;
+          memset(spritefile, 0, 18);
+          snprintf(spritefile, 6, "DATA\\");
+          memcpy(spritefile+5, line+7, filelen);
+          memcpy(linex, line+1, 3);
+          memcpy(liney, line+4, 3);
+          posx=atoi(linex);
+          posy=atoi(liney);
+          currentsprites[spritecount].x=atoi(linex);
+          currentsprites[spritecount].y=atoi(liney);
+          memcpy(currentsprites[spritecount].file, line+7, filelen);
+          spritecount++;
 
-        displaysprite:
-        sprite=gzopen(spritefile,"rb");
-        if(sprite != NULL) {
-          char* spritedata;
-          char spritebuf[1];
-          int x=0;
-          int y=0;
-          int ppos;
-          unsigned int pctsize=0;
-          unsigned int pctpos=0;
-          char* pctmem;
-          unsigned short header;
-          unsigned char bytes[4] = {0};
+          displaysprite:
+          sprite=gzopen(spritefile,"rb");
+          if(sprite != NULL) {
+            char* spritedata;
+            char spritebuf[1];
+            int x=0;
+            int y=0;
+            int ppos;
+            unsigned int pctsize=0;
+            unsigned int pctpos=0;
+            char* pctmem;
+            unsigned short header;
+            unsigned char bytes[4] = {0};
 
-          // We'll now get the uncompressed files size
-          int sprfd=open(spritefile, O_RDONLY);
-          read(sprfd, &header, 2);
+            // We'll now get the uncompressed files size
+            int sprfd=open(spritefile, O_RDONLY);
+            read(sprfd, &header, 2);
 
-          // gzip or not?
-          if(header == 0x1f8b) {
-            lseek(sprfd, -4, SEEK_END);
-            read(sprfd, &bytes, 4);
-            pctsize=bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
-          } else {
-            pctsize=lseek(sprfd, -4, SEEK_END);
-          }
-          close(sprfd);
+            // gzip or not?
+            if(header == 0x1f8b) {
+              lseek(sprfd, -4, SEEK_END);
+              read(sprfd, &bytes, 4);
+              pctsize=bytes[3] << 24 | bytes[2] << 16 | bytes[1] << 8 | bytes[0];
+            } else {
+              pctsize=lseek(sprfd, -4, SEEK_END);
+            }
+            close(sprfd);
 
-          pctmem=malloc(pctsize);
-          if(pctmem == NULL) goto endsprite;
+            pctmem=malloc(pctsize);
+            if(pctmem == NULL) goto endsprite;
 
-          gzread(sprite, pctmem, pctsize);
-          gzclose(sprite);
+            gzread(sprite, pctmem, pctsize);
+            gzclose(sprite);
 
-          char *videobuffer=malloc(25600);
-          if(videobuffer == NULL) goto abortdraw;
+            char *videobuffer=malloc(25600);
+            if(videobuffer == NULL) goto abortdraw;
 
-          memcpy(videobuffer, videoram, 25600);
+            memcpy(videobuffer, videoram, 25600);
 
-          // Now for the drawing routine
-          for(pctpos=0; pctpos < pctsize; pctpos++) {
+            // Now for the drawing routine
+            for(pctpos=0; pctpos < pctsize; pctpos++) {
+              // Horizontal line change!
+              if(pctmem[pctpos] == 10) {
+               if(posy+y <= 400) {
+                  y++;
+                  x=0;
+               } else {
+                  goto abortdraw;
+                }
+              }
 
-            // Horizontal line change!
-            if(pctmem[pctpos] == 10) {
-              if(posy+y <= 400) {
-                y++;
-                x=0;
-              } else {
-                goto abortdraw;
+              // Transparency, don't draw anything
+              if(pctmem[pctpos] == ' ') {
+                if(x+posx < 639) x++;
+              }
+
+             // Actual writing.
+             // Thanks, grad'
+             if(pctmem[pctpos] == '0' || pctmem[pctpos] == '1') {
+                if(x+posx < 639 && posy+y <= 400) {
+                  ppos = (y + posy) * 640 + x + posx;
+                  if(pctmem[pctpos] == '1') videobuffer[ppos / 8] |= 1 << 7 - (ppos % 8);
+                  if(pctmem[pctpos] == '0') videobuffer[ppos / 8] &= ~(1 << 7 - (ppos % 8));
+                  x++;
+                };
               }
             }
+            memcpy(videoram, videobuffer, 25600);
 
-            // Transparency, don't draw anything
-            if(pctmem[pctpos] == ' ') {
-              if(x+posx < 639) x++;
-            }
-
-           // Actual writing.
-           // Thanks, grad'
-           if(pctmem[pctpos] == '0' || pctmem[pctpos] == '1') {
-              if(x+posx < 639 && posy+y <= 400) {
-                ppos = (y + posy) * 640 + x + posx;
-                if(pctmem[pctpos] == '1') videobuffer[ppos / 8] |= 1 << 7 - (ppos % 8);
-                if(pctmem[pctpos] == '0') videobuffer[ppos / 8] &= ~(1 << 7 - (ppos % 8));
-                x++;
-              };
-            }
+            free(videobuffer);
+            abortdraw:
+            free(pctmem);
           }
-          memcpy(videoram, videobuffer, 25600);
-
-          free(videobuffer);
-          abortdraw:
-          free(pctmem);
-        }
-        endsprite:
-        if(isbackfunc==1) {
-          isbackfunc=0;
-          goto spritedrawn;
+          endsprite:
+          if(isbackfunc==1) {
+            isbackfunc=0;
+            goto spritedrawn;
+          }
         }
       }
     }
