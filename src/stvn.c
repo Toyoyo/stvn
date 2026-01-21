@@ -1,6 +1,6 @@
 /*
  *      STVN Engine
- *      (c) 2022, 2023 Toyoyo
+ *      (c) 2022, 2023, 2026 Toyoyo
  *
  *      This library is free software; you can redistribute it and/or
  *      modify it under the terms of the GNU Lesser General Public
@@ -24,9 +24,6 @@
 #include <string.h>
 #include <zlib.h>
 #include <ext.h>
-
-// Line reading routine, better than I would have done anyway
-#include "line.h"
 
 // SNDH routines, including our gcc function call convention wrapper
 #include "sndh.h"
@@ -79,6 +76,22 @@
     memcpy(videoram, background, 25600);\
   }\
 })
+
+char* get_line(FILE *fp) {
+  static char newline[256] = {0};
+  if (fp == NULL) {
+    return NULL;
+  }
+  newline[255] = '\0';
+  if (fgets(newline, 256, fp) == NULL) {
+    return NULL;
+  }
+  size_t len = strlen(newline);
+  if (len > 0 && newline[len - 1] == '\n') {
+    newline[len - 1] = '\0';
+  }
+  return newline;
+}
 
 typedef struct {
   int x;
@@ -304,6 +317,53 @@ static void DispHelp() {
   DrawVLine(392, 128, 224);
 }
 
+// Wipe screen vertically
+static void FxVWipeDown(char byte) {
+  char* videoram = Logbase();
+  char pattern[80];
+  for(int i=0; i<320; i+=2) {
+    memset(pattern, byte, 80);
+    memcpy(videoram+i*80, &pattern, 80);
+    memcpy(videoram+80+i*80, &pattern, 80);
+    delay(5);
+  }
+}
+static void FxVWipeUp(char byte) {
+  char* videoram = Logbase();
+  char pattern[80];
+  for(int i=318; i>=0; i-=2) {
+    memset(pattern, byte, 80);
+    memcpy(videoram+80+i*80, &pattern, 80);
+    memcpy(videoram+i*80, &pattern, 80);
+    delay(5);
+  }
+}
+static void FxVWipeMidIn(char byte) {
+  char* videoram = Logbase();
+  char pattern[80];
+  for(int i=160; i>=0; i-=2) {
+    memset(pattern, byte, 80);
+    if(i<159) memcpy(videoram+12800+i*80, &pattern, 80);
+    memcpy(videoram+12800+80+i*80, &pattern, 80);
+    memcpy(videoram+12800-i*80, &pattern, 80);
+    memcpy(videoram+12800-80-i*80, &pattern, 80);
+    delay(5);
+  }
+}
+static void FxVWipeMidOut(char byte) {
+  char* videoram = Logbase();
+  char pattern[80];
+  for(int i=0; i<161; i+=2) {
+    memset(pattern, byte, 80);
+    if(i<160) memcpy(videoram+12800+i*80, &pattern, 80);
+    if(i<160) memcpy(videoram+12800+80+i*80, &pattern, 80);
+    memcpy(videoram+12800-i*80, &pattern, 80);
+    memcpy(videoram+12800-80-i*80, &pattern, 80);
+    delay(5);
+  }
+}
+
+
 // Main function which will run in supervisor mode
 static void run() {
   char *background;
@@ -374,6 +434,7 @@ static void run() {
   if(fileexists("stvn.ini") == 0) {
     config=fopen("stvn.ini", "r");
     line = get_line(config);
+
     while(line) {
       if(strlen(line) > 0) {
         if(*line == 'S') {
@@ -456,7 +517,8 @@ parseline:
             memcpy(videoram, background, 25600);
           }
 
-          if(next == 5) {
+          // Don't go back if we can't
+          if(next == 5 && prevLineNumber > 0) {
             save_linenb = prevLineNumber;
             goto seektoline;
           }
@@ -715,11 +777,7 @@ parseline:
           snprintf(picture, 6, "DATA\\");
           memcpy(picture+5, line+1, filelen);
 
-          // In case the 'new' picture is the previous one
-          // Don't waste cycles for nothing
-          if(strncmp(picture, oldpicture, 18) != 0) {
-           LoadBackground();
-          }
+          LoadBackground();
           reset_cursprites();
           spritecount=0;
           charlines=0;
@@ -749,6 +807,12 @@ parseline:
           prevLineNumber=savepointer;
         }
         savepointer=lineNumber;
+      }
+
+      if(*line == 'E') {
+        charlines=0;
+        memcpy(videoram+25600, textarea, 6400);
+        RedrawBorder();
       }
 
       // 'T' : Text line
@@ -879,7 +943,8 @@ parseline:
               memcpy(videoram, background, 25600);
             }
 
-            if(next == 5) {
+            // Don't go back if we can't
+            if(next == 5 && prevLineNumber > 0) {
                 save_linenb = prevLineNumber;
                 goto seektoline;
             }
@@ -901,6 +966,62 @@ parseline:
       if(*line == 'D') {
         if(strlen(line+1) < 6) {
           sleep(atoi(line+1));
+        }
+      }
+
+      if(*line == 'X') {
+        if(strlen(line) >= 3) {
+          char effect[3] = {0};
+          memcpy(effect, line+1, 2);
+          char effectnum=atoi(effect);
+
+          // FxVWipeDown set
+          if(effectnum == 1) FxVWipeDown(255);
+          if(effectnum == 2) FxVWipeDown(0);
+          if(effectnum == 3) {
+            FxVWipeDown(255);
+            FxVWipeDown(0);
+          }
+          if(effectnum == 4) {
+            FxVWipeDown(0);
+            FxVWipeDown(255);
+          }
+
+          // FxVWipeUp set
+          if(effectnum == 5) FxVWipeUp(255);
+          if(effectnum == 6) FxVWipeUp(0);
+          if(effectnum == 7) {
+            FxVWipeUp(255);
+            FxVWipeUp(0);
+          }
+          if(effectnum == 8) {
+            FxVWipeUp(0);
+            FxVWipeUp(255);
+          }
+
+          // FxVWipeMidIn set
+          if(effectnum ==  9) FxVWipeMidIn(255);
+          if(effectnum == 10) FxVWipeMidIn(0);
+          if(effectnum == 11) {
+            FxVWipeMidIn(255);
+            FxVWipeMidIn(0);
+          }
+          if(effectnum == 12) {
+            FxVWipeMidIn(0);
+            FxVWipeMidIn(255);
+          }
+
+          // FxVWipeMidOut set
+          if(effectnum == 13) FxVWipeMidOut(255);
+          if(effectnum == 14) FxVWipeMidOut(0);
+          if(effectnum == 15) {
+            FxVWipeMidOut(255);
+            FxVWipeMidOut(0);
+          }
+          if(effectnum == 16) {
+            FxVWipeMidOut(0);
+            FxVWipeMidOut(255);
+          }
         }
       }
 

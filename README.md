@@ -155,3 +155,29 @@ Supported operands:
   * If you go back and neither background & sprites changes: nothing is drawn
   * If you go back and there's a background change, this will also trigger a sprite draw pass.
   * If you go back to the 'S' line just before a 'A' Line, it will trigger a draw pass too. This is by design: When the 'S' line happens, the sprite doesn't exist yet.
+
+* 'E' : Manually erase the text box, reset character lines to 0
+
+* 'X' : Trigger a visual effect.
+
+  Syntax: ``X[XX]`` like ``X03``
+
+  01: Vertically fade to black from top to bottom, 2 lines by 2 lines
+  02: Vertically fade to white from top to bottom, 2 linse by 2 lines
+  03: 01 then 02
+  04: 02 then 01
+
+  05: Vertically fade to black from bottom to top, 2 lines by 2 lines
+  06: Vertically fade to white from bottom to top, 2 linse by 2 lines
+  07: 05 then 06
+  08: 06 then 05
+
+  09: Vertically fade to black from outer to inner, 2 lines by 2 lines
+  10: Vertically fade to white from outer to inner, 2 linse by 2 lines
+  11: 09 then 10
+  12: 10 then 09
+
+  13: Vertically fade to black from inner to outer, 2 lines by 2 lines
+  14: Vertically fade to white from inner to outer, 2 linse by 2 lines
+  15: 13 then 14
+  16: 14 then 13

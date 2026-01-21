@@ -42,10 +42,7 @@ sndh.o:
 stvn.o:
 	$(CC) $(CFLAGS) $(SOURCES_DIR)/stvn.c -o $(BUILD_DIR)/stvn.o
 
-line.o:
-	$(CC) $(CFLAGS) $(SOURCES_DIR)/line.c -o $(BUILD_DIR)/line.o
-
-main: stvn.o line.o sndh.o sndhisr.o
+main: stvn.o sndh.o sndhisr.o
 	$(CC) -nostdlib $(LIBCMINI)/build/objs/crt0.o \
 		$(BUILD_DIR)/*.o \
 		-o $(BUILD_DIR)/stvn.prg $(LDFLAGS);
