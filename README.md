@@ -8,6 +8,7 @@ To build this, you need the following:
 * GNU make
 * m68k-atari-mintelf gcc toolchain
 * vasmm68k_mot
+* UPX for compression
 
 ## Prerequistes
 * Atari ST (STe if you want to use DMA SNDH files)
