@@ -164,7 +164,7 @@ Supported operands:
 
   01: Vertically fade to black from top to bottom, 2 lines by 2 lines
 
-  02: Vertically fade to white from top to bottom, 2 linse by 2 lines
+  02: Vertically fade to white from top to bottom, 2 lines by 2 lines
 
   03: 01 then 02
 
@@ -172,7 +172,7 @@ Supported operands:
 
   05: Vertically fade to black from bottom to top, 2 lines by 2 lines
 
-  06: Vertically fade to white from bottom to top, 2 linse by 2 lines
+  06: Vertically fade to white from bottom to top, 2 lines by 2 lines
 
   07: 05 then 06
 
@@ -180,7 +180,7 @@ Supported operands:
 
   09: Vertically fade to black from outer to inner, 2 lines by 2 lines
 
-  10: Vertically fade to white from outer to inner, 2 linse by 2 lines
+  10: Vertically fade to white from outer to inner, 2 lines by 2 lines
 
   11: 09 then 10
 
@@ -188,7 +188,7 @@ Supported operands:
 
   13: Vertically fade to black from inner to outer, 2 lines by 2 lines
 
-  14: Vertically fade to white from inner to outer, 2 linse by 2 lines
+  14: Vertically fade to white from inner to outer, 2 lines by 2 lines
 
   15: 13 then 14
 
