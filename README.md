@@ -106,6 +106,8 @@ Supported operands:
 
   A label 4 bytes sequence at the beginning of a line
 
+  You can jump backward, but this have limited support, so this is best avoided
+
 * 'C' : Offer a choice and store it in a register
 
   Key '1' entered: store 0
@@ -129,6 +131,8 @@ Supported operands:
 * 'B' : Jump to label if register is set.
 
   Syntax: ``B[register number][Choice][label]`` like ``B02LBL1`` meaning "if register 0 is at 2, jump to LBL1"
+
+  You can jump backward, but this have limited support, so this is best avoided
 
 * 'D' : Wait the specified number of milliseconds (max 99999).
 
