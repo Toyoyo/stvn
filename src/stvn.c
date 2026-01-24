@@ -718,24 +718,34 @@ parseline:
                 char histline[16] = {0};
                 int histpos = 0;
                 char c;
+                int eof_reached = 0;
                 // Skip newline after header
-                read(fd, &c, 1);
+                if(read(fd, &c, 1) != 1) eof_reached = 1;
                 // Read savehistory_idx (second line)
-                while(read(fd, &c, 1) == 1 && c != '\n' && histpos < 15) {
-                  histline[histpos++] = c;
-                }
-                histline[histpos] = '\0';
-                savehistory_idx = atoi(histline);
-                memset(savehistory, 0, sizeof(savehistory));
-                // Read savehistory entries
-                for(int j=0; j<savehistory_idx && j<1000; j++) {
-                  memset(histline, 0, 16);
-                  histpos = 0;
+                if(!eof_reached) {
                   while(read(fd, &c, 1) == 1 && c != '\n' && histpos < 15) {
                     histline[histpos++] = c;
                   }
                   histline[histpos] = '\0';
-                  savehistory[j] = atoi(histline);
+                  if(histpos == 0) eof_reached = 1;
+                }
+                if(!eof_reached) {
+                  savehistory_idx = atoi(histline);
+                  memset(savehistory, 0, sizeof(savehistory));
+                  // Read savehistory entries
+                  for(int j=0; j<savehistory_idx && j<1000; j++) {
+                    memset(histline, 0, 16);
+                    histpos = 0;
+                    while(read(fd, &c, 1) == 1 && c != '\n' && histpos < 15) {
+                      histline[histpos++] = c;
+                    }
+                    if(histpos == 0) {
+                      savehistory_idx = j;
+                      break;
+                    }
+                    histline[histpos] = '\0';
+                    savehistory[j] = atoi(histline);
+                  }
                 }
                 skipnexthistory=1;
 
