@@ -40,7 +40,7 @@ Defaults: ``STVN.VNS`` & ``20000``
 
 ## Supported formats / limitations:
 * For pictures: PI1/PI3 monochrome, uncompressed 32KiB files.
-  The palette isn't used, only the first 25600 bytes are read (640x360 image, leaving 40 pixels for text, 4 lines)
+  The palette isn't used, only the first 25600 bytes are read (640x320 image, leaving 80 pixels for the text box, 1 "Sayer" line and 4 text lines)
 
 For audio: any SNDH with a working playback routine compatible with gwEm's sndhlib
 Both can be gzipped.
