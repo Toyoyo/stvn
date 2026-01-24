@@ -46,7 +46,7 @@
     FILE* fd=fopen(savefile, "w");\
     memcpy(videoram, background, 25600);\
     if(fd != NULL) {\
-      fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d", savepointer, \
+      fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d\n", savepointer, \
         choicedata[0],\
         choicedata[1],\
         choicedata[2],\
@@ -57,6 +57,10 @@
         choicedata[7],\
         choicedata[8],\
         choicedata[9]);\
+      fprintf(fd, "%d\n", savehistory_idx);\
+      for(int i=0; i<savehistory_idx; i++) {\
+        fprintf(fd, "%d\n", savehistory[i]);\
+      }\
       fclose(fd);\
     }\
   }\
@@ -524,8 +528,11 @@ static void run() {
   char jumplabel[7] = {0};
   char savefile[14] = {0};
   long savepointer = 0;
+  int savehistory[1000] = {0};  // Track all savepointer assignments
+  int savehistory_idx = 0;
   long save_linenb = 0;
   int skipnextprev=0;
+  int skipnexthistory=0;
   int loadsave=0;
 
   // Sprite crap
@@ -654,8 +661,11 @@ parseline:
           }
 
           // Don't go back if we can't
-          if(next == 5 && prevLineNumber > 0) {
-            save_linenb = prevLineNumber;
+          if(next == 5 && savehistory_idx >= 2) {
+            save_linenb = savehistory[savehistory_idx - 2];
+            savehistory[savehistory_idx - 1] = 0;
+            savehistory_idx--;
+            skipnexthistory=1;
             goto seektoline;
           }
 
@@ -703,6 +713,31 @@ parseline:
                   save_register_val = atoi(save_register);
                   choicedata[i] = save_register_val;
                 }
+
+                // Restore savehistory
+                char histline[16] = {0};
+                int histpos = 0;
+                char c;
+                // Skip newline after header
+                read(fd, &c, 1);
+                // Read savehistory_idx (second line)
+                while(read(fd, &c, 1) == 1 && c != '\n' && histpos < 15) {
+                  histline[histpos++] = c;
+                }
+                histline[histpos] = '\0';
+                savehistory_idx = atoi(histline);
+                memset(savehistory, 0, sizeof(savehistory));
+                // Read savehistory entries
+                for(int j=0; j<savehistory_idx && j<1000; j++) {
+                  memset(histline, 0, 16);
+                  histpos = 0;
+                  while(read(fd, &c, 1) == 1 && c != '\n' && histpos < 15) {
+                    histline[histpos++] = c;
+                  }
+                  histline[histpos] = '\0';
+                  savehistory[j] = atoi(histline);
+                }
+                skipnexthistory=1;
 
                 seektoline:
                 // Now, we're going to parse the entire file...
@@ -943,6 +978,16 @@ parseline:
           prevLineNumber=savepointer;
         }
         savepointer=lineNumber;
+        if(skipnexthistory == 1) {
+          skipnexthistory=0;
+        } else {
+          if(savehistory_idx >= 1000) {
+            memmove(savehistory, savehistory + 1, 999 * sizeof(int));
+            savehistory[999] = 0;
+            savehistory_idx = 999;
+          }
+          savehistory[savehistory_idx++] = lineNumber;
+        }
       }
 
       if(*line == 'E') {
@@ -1018,6 +1063,8 @@ parseline:
          rewind(script);
          lineNumber=0;
          savepointer=0;
+         savehistory_idx=0;
+         memset(savehistory, 0, sizeof(savehistory));
          prevLineNumber=0;
          willplaying=0;
          spritecount=0;
@@ -1082,8 +1129,11 @@ parseline:
             }
 
             // Don't go back if we can't
-            if(next == 5 && prevLineNumber > 0) {
-                save_linenb = prevLineNumber;
+            if(next == 5 && savehistory_idx >= 2) {
+                save_linenb = savehistory[savehistory_idx - 2];
+                savehistory[savehistory_idx - 1] = 0;
+                savehistory_idx--;
+                skipnexthistory=1;
                 goto seektoline;
             }
 
