@@ -42,12 +42,15 @@ Defaults: ``STVN.VNS`` & ``20000``
 * For pictures: PI1/PI3 monochrome, uncompressed 32KiB files.
   The palette isn't used, only the first 25600 bytes are read (640x320 image, leaving 80 pixels for the text box, 1 "Sayer" line and 4 text lines)
 
-For audio: any SNDH with a working playback routine compatible with gwEm's sndhlib
+* For audio: any SNDH with a working playback routine compatible with gwEm's sndhlib
+
 Both can be gzipped.
 
-Savestates: 4 supported, adding more would be trivial.
-10 VN choices binary "registers", adding more wouldn't be very hard.
-Scripts can be 999999 lines long.
+* Savestates: 4 supported, adding more would be trivial.
+  10 VN choices binary "registers", adding more wouldn't be very hard.
+  Scripts can be 999999 lines long.
+
+* Rollback history up to 1000 entries, included in savestates.
 
 All resource files must be placed in the 'data' subdirectory.
 
@@ -106,8 +109,6 @@ Supported operands:
 
   A label 4 bytes sequence at the beginning of a line
 
-  You can jump backward, but this have limited support, so this is best avoided
-
 * 'C' : Offer a choice and store it in a register
 
   Key '1' entered: store 0
@@ -131,8 +132,6 @@ Supported operands:
 * 'B' : Jump to label if register is set.
 
   Syntax: ``B[register number][Choice][label]`` like ``B02LBL1`` meaning "if register 0 is at 2, jump to LBL1"
-
-  You can jump backward, but this have limited support, so this is best avoided
 
 * 'D' : Wait the specified number of milliseconds (max 99999).
 
