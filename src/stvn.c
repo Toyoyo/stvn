@@ -46,7 +46,7 @@
     FILE* fd=fopen(savefile, "w");\
     memcpy(videoram, background, 25600);\
     if(fd != NULL) {\
-      fprintf(fd, "%06d%06d%d%d%d%d%d%d%d%d%d%d", savepointer, prevLineNumber, \
+      fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d", savepointer, \
         choicedata[0],\
         choicedata[1],\
         choicedata[2],\
@@ -527,7 +527,6 @@ static void run() {
   long save_linenb = 0;
   int skipnextprev=0;
   int loadsave=0;
-  int IsLoading=0;
 
   // Sprite crap
   char spritefile[18] = {0};
@@ -657,7 +656,6 @@ parseline:
           // Don't go back if we can't
           if(next == 5 && prevLineNumber > 0) {
             save_linenb = prevLineNumber;
-            IsLoading=0;
             goto seektoline;
           }
 
@@ -688,20 +686,15 @@ parseline:
                 int fd=open(savefile, O_RDONLY);
                 char savestate[17] = {0};
                 char save_line[7] = {0};
-                char save_prev[7] = {0};
                 char save_register[2] = {0};
                 char save_register_val=0;
                 int forceredraw=0;
-                IsLoading=1;
                 save_linenb = 0;
                 read(fd, &savestate, 16);
 
                 // First, get the target line number
                 memcpy(save_line, savestate, 6);
                 save_linenb=atoi(save_line);
-
-                memcpy(save_prev, savestate+6, 6);
-                prevLineNumber=atoi(save_prev);
 
                 // Now we restore the choices register
                 int i;
@@ -716,7 +709,7 @@ parseline:
                 rewind(script);
                 lineNumber=0;
                 savepointer=0;
-                if(IsLoading != 1) prevLineNumber=0;
+                prevLineNumber=0;
                 willplaying=0;
                 spritecount=0;
 
@@ -779,7 +772,7 @@ parseline:
                   }
 
                   if(*line == 'S') {
-                    if(IsLoading != 1) prevLineNumber = savepointer;
+                    prevLineNumber = savepointer;
                     savepointer=lineNumber;
                   }
 
@@ -1091,7 +1084,6 @@ parseline:
             // Don't go back if we can't
             if(next == 5 && prevLineNumber > 0) {
                 save_linenb = prevLineNumber;
-                IsLoading=0;
                 goto seektoline;
             }
 
