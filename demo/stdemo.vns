@@ -17,7 +17,7 @@ SHinata
 TWhat do I do?
 T1:Stay?
 T2:Leave?
-C0
+C02
 B0LSC2
 SKana
 TI want to say something too!
@@ -69,4 +69,3 @@ SHinata
 TThen take a nap.
 W
 LSC4
-

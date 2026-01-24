@@ -194,3 +194,51 @@ Supported operands:
   15: 13 then 14
 
   16: 14 then 13
+
+  17: Horizontally fade to black from left to right, 1 cell at a time
+
+  18: Horizontally fade to white from left to right, 1 cell at a time
+
+  19: 17 then 18
+
+  20: 18 then 17
+
+  21: Horizontally fade to black from right to left, 1 cell at a time
+
+  22: Horizontally fade to white from right to left, 1 cell at a time
+
+  23: 21 then 22
+
+  24: 22 then 21
+
+  25: Horizontally fade to black from edges to middle, 1 cell at a time
+
+  26: Horizontally fade to black from edges to middle, 1 cell at a time
+
+  27: 25 then 26
+
+  28: 26 then 25
+
+  29: Horizontally fade to black from middle to edges, 1 cell at a time
+
+  30: Horizontally fade to black from middle to edges, 1 cell at a time
+
+  31: 29 then 30
+
+  32: 30 then 29
+
+  33: Draw expanding black pseudo-circle from center using 16x32 pixel blocks
+
+  34: Draw expanding white pseudo-circle from center using 16x32 pixel blocks
+
+  35: 33 then 34
+
+  36: 34 then 33
+
+  37: Draw shrinking black pseudo-circle from edges using 16x32 pixel blocks
+
+  38: Draw shrinking white pseudo-circle from edges using 16x32 pixel blocks
+
+  39: 37 then 38
+
+  40: 38 then 37

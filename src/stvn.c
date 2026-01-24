@@ -46,7 +46,7 @@
     FILE* fd=fopen(savefile, "w");\
     memcpy(videoram, background, 25600);\
     if(fd != NULL) {\
-      fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d", savepointer,\
+      fprintf(fd, "%06d%06d%d%d%d%d%d%d%d%d%d%d", savepointer, prevLineNumber, \
         choicedata[0],\
         choicedata[1],\
         choicedata[2],\
@@ -363,8 +363,144 @@ static void FxVWipeMidOut(char byte) {
   }
 }
 
+// Wipe screen horizontally
+static void FxHWipeRight(char byte) {
+  char* videoram = Logbase();
+  for(int col=0; col<80; col++) {
+    for(int line=0; line<320; line++) {
+      videoram[line*80 + col] = byte;
+    }
+    delay(5);
+  }
+}
+static void FxHWipeLeft(char byte) {
+  char* videoram = Logbase();
+  for(int col=79; col>=0; col--) {
+    for(int line=0; line<320; line++) {
+      videoram[line*80 + col] = byte;
+    }
+    delay(5);
+  }
+}
+static void FxHWipeMidIn(char byte) {
+  char* videoram = Logbase();
+  for(int col=0; col<40; col++) {
+    for(int line=0; line<320; line++) {
+      videoram[line*80 + col] = byte;
+      videoram[line*80 + (79 - col)] = byte;
+    }
+    delay(5);
+  }
+}
+static void FxHWipeMidOut(char byte) {
+  char* videoram = Logbase();
+  for(int col=0; col<40; col++) {
+    for(int line=0; line<320; line++) {
+      videoram[line*80 + (39 - col)] = byte;
+      videoram[line*80 + (40 + col)] = byte;
+    }
+    delay(5);
+  }
+}
 
-// Main function which will run in supervisor mode
+// Draw expanding pseudo-circle from center using 16x32 pixel blocks
+static void FxCircleOut(char byte) {
+  char* videoram = Logbase();
+  int bcx = 20;
+  int bcy = 5;
+
+  for(int r = 0; r <= 23; r++) {
+    int r2 = r * r;
+    int prev_r2 = (r > 0) ? (r - 1) * (r - 1) : -1;
+
+    for(int by = 0; by < 10; by++) {
+      int dy = by - bcy;
+      int dy2 = 4 * dy * dy;
+      if(dy2 > r2) continue;
+
+      int dx = 0;
+      int target = r2 - dy2;
+      while((dx + 1) * (dx + 1) <= target) dx++;
+
+      int prev_dx = -1;
+      if(prev_r2 >= 0 && dy2 <= prev_r2) {
+        prev_dx = 0;
+        int prev_target = prev_r2 - dy2;
+        while((prev_dx + 1) * (prev_dx + 1) <= prev_target) prev_dx++;
+      }
+
+      for(int line = 0; line < 32; line++) {
+        int y = by * 32 + line;
+        if(y >= 320) continue;
+
+        for(int bx = bcx - dx; bx <= bcx - prev_dx - 1; bx++) {
+          if(bx >= 0 && bx < 40) {
+            videoram[y * 80 + bx * 2] = byte;
+            videoram[y * 80 + bx * 2 + 1] = byte;
+          }
+        }
+
+        for(int bx = bcx + prev_dx + 1; bx <= bcx + dx; bx++) {
+          if(bx >= 0 && bx < 40) {
+            videoram[y * 80 + bx * 2] = byte;
+            videoram[y * 80 + bx * 2 + 1] = byte;
+          }
+        }
+      }
+    }
+    delay(5);
+  }
+}
+
+// Draw shrinking pseudo-circle from edges to center using 16x32 pixel blocks
+static void FxCircleIn(char byte) {
+  char* videoram = Logbase();
+  int bcx = 20;
+  int bcy = 5;
+
+  for(int r = 23; r >= 0; r--) {
+    int r2 = r * r;
+    int next_r2 = (r > 0) ? (r - 1) * (r - 1) : -1;
+
+    for(int by = 0; by < 10; by++) {
+      int dy = by - bcy;
+      int dy2 = 4 * dy * dy;
+      if(dy2 > r2) continue;
+
+      int dx = 0;
+      int target = r2 - dy2;
+      while((dx + 1) * (dx + 1) <= target) dx++;
+
+      int next_dx = -1;
+      if(next_r2 >= 0 && dy2 <= next_r2) {
+        next_dx = 0;
+        int next_target = next_r2 - dy2;
+        while((next_dx + 1) * (next_dx + 1) <= next_target) next_dx++;
+      }
+
+      for(int line = 0; line < 32; line++) {
+        int y = by * 32 + line;
+        if(y >= 320) continue;
+
+        for(int bx = bcx - dx; bx <= bcx - next_dx - 1; bx++) {
+          if(bx >= 0 && bx < 40) {
+            videoram[y * 80 + bx * 2] = byte;
+            videoram[y * 80 + bx * 2 + 1] = byte;
+          }
+        }
+
+        for(int bx = bcx + next_dx + 1; bx <= bcx + dx; bx++) {
+          if(bx >= 0 && bx < 40) {
+            videoram[y * 80 + bx * 2] = byte;
+            videoram[y * 80 + bx * 2 + 1] = byte;
+          }
+        }
+      }
+    }
+    delay(5);
+  }
+}
+
 static void run() {
   char *background;
   char textarea[6400] = {0};
@@ -391,6 +527,7 @@ static void run() {
   long save_linenb = 0;
   int skipnextprev=0;
   int loadsave=0;
+  int IsLoading=0;
 
   // Sprite crap
   char spritefile[18] = {0};
@@ -520,6 +657,7 @@ parseline:
           // Don't go back if we can't
           if(next == 5 && prevLineNumber > 0) {
             save_linenb = prevLineNumber;
+            IsLoading=0;
             goto seektoline;
           }
 
@@ -550,15 +688,20 @@ parseline:
                 int fd=open(savefile, O_RDONLY);
                 char savestate[17] = {0};
                 char save_line[7] = {0};
+                char save_prev[7] = {0};
                 char save_register[2] = {0};
                 char save_register_val=0;
                 int forceredraw=0;
+                IsLoading=1;
                 save_linenb = 0;
                 read(fd, &savestate, 16);
 
                 // First, get the target line number
                 memcpy(save_line, savestate, 6);
                 save_linenb=atoi(save_line);
+
+                memcpy(save_prev, savestate+6, 6);
+                prevLineNumber=atoi(save_prev);
 
                 // Now we restore the choices register
                 int i;
@@ -573,7 +716,7 @@ parseline:
                 rewind(script);
                 lineNumber=0;
                 savepointer=0;
-                prevLineNumber=0;
+                if(IsLoading != 1) prevLineNumber=0;
                 willplaying=0;
                 spritecount=0;
 
@@ -636,7 +779,7 @@ parseline:
                   }
 
                   if(*line == 'S') {
-                    prevLineNumber = savepointer;
+                    if(IsLoading != 1) prevLineNumber = savepointer;
                     savepointer=lineNumber;
                   }
 
@@ -862,6 +1005,8 @@ parseline:
         if(strlen(line) >= 6) {
           memcpy(jumplabel, line+1, 5);
           jumptolabel:
+          rewind(script);
+          lineNumber=0;
           while(1) {
             line = get_line(script);
             if(line == NULL) goto endprog;
@@ -946,6 +1091,7 @@ parseline:
             // Don't go back if we can't
             if(next == 5 && prevLineNumber > 0) {
                 save_linenb = prevLineNumber;
+                IsLoading=0;
                 goto seektoline;
             }
 
@@ -1021,6 +1167,78 @@ parseline:
           if(effectnum == 16) {
             FxVWipeMidOut(0);
             FxVWipeMidOut(255);
+          }
+
+          // FxHWipeRight set (left to right)
+          if(effectnum == 17) FxHWipeRight(255);
+          if(effectnum == 18) FxHWipeRight(0);
+          if(effectnum == 19) {
+            FxHWipeRight(255);
+            FxHWipeRight(0);
+          }
+          if(effectnum == 20) {
+            FxHWipeRight(0);
+            FxHWipeRight(255);
+          }
+
+          // FxHWipeLeft set (right to left)
+          if(effectnum == 21) FxHWipeLeft(255);
+          if(effectnum == 22) FxHWipeLeft(0);
+          if(effectnum == 23) {
+            FxHWipeLeft(255);
+            FxHWipeLeft(0);
+          }
+          if(effectnum == 24) {
+            FxHWipeLeft(0);
+            FxHWipeLeft(255);
+          }
+
+          // FxHWipeMidIn set (edges to middle)
+          if(effectnum == 25) FxHWipeMidIn(255);
+          if(effectnum == 26) FxHWipeMidIn(0);
+          if(effectnum == 27) {
+            FxHWipeMidIn(255);
+            FxHWipeMidIn(0);
+          }
+          if(effectnum == 28) {
+            FxHWipeMidIn(0);
+            FxHWipeMidIn(255);
+          }
+
+          // FxHWipeMidOut set (middle to edges)
+          if(effectnum == 29) FxHWipeMidOut(255);
+          if(effectnum == 30) FxHWipeMidOut(0);
+          if(effectnum == 31) {
+            FxHWipeMidOut(255);
+            FxHWipeMidOut(0);
+          }
+          if(effectnum == 32) {
+            FxHWipeMidOut(0);
+            FxHWipeMidOut(255);
+          }
+
+          // FxCircleOut set (expanding circle from center)
+          if(effectnum == 33) FxCircleOut(255);
+          if(effectnum == 34) FxCircleOut(0);
+          if(effectnum == 35) {
+            FxCircleOut(255);
+            FxCircleOut(0);
+          }
+          if(effectnum == 36) {
+            FxCircleOut(0);
+            FxCircleOut(255);
+          }
+
+          // FxCircleIn set (shrinking circle to center)
+          if(effectnum == 37) FxCircleIn(255);
+          if(effectnum == 38) FxCircleIn(0);
+          if(effectnum == 39) {
+            FxCircleIn(255);
+            FxCircleIn(0);
+          }
+          if(effectnum == 40) {
+            FxCircleIn(0);
+            FxCircleIn(255);
           }
         }
       }
