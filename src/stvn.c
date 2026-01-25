@@ -52,6 +52,20 @@
   }\
 })
 
+#define DispLoading() ({\
+  memcpy(videoram+25600, textarea, 6400);\
+  locate(0,21);\
+  printf(" Loading...");\
+  RedrawBorder();\
+})
+
+#define DispRollback() ({\
+  memcpy(videoram+25600, textarea, 6400);\
+  locate(0,21);\
+  printf(" Rolling back...");\
+  RedrawBorder();\
+})
+
 #define SaveMacro() ({\
   next=readKeyBoardStatus();\
   while(NoValidSaveChoice) {\
@@ -669,6 +683,7 @@ parseline:
             savehistory[savehistory_idx - 1] = 0;
             savehistory_idx--;
             skipnexthistory=1;
+            DispRollback();
             goto seektoline;
           }
 
@@ -690,9 +705,9 @@ parseline:
                 next=readKeyBoardStatus();
             }
             RestoreScreen();
-
             lblloadsave:
             // Effective loading.
+            DispLoading();
             if(next!=2) {
               HandleSaveFilename();
               if(fileexists(savefile) == 0) {
@@ -1109,7 +1124,9 @@ parseline:
               }
               HandleSaveFilename();
               RestoreScreen();
-              if(fileexists(savefile) == 0) goto lblloadsave;
+              if(fileexists(savefile) == 0) {
+                goto lblloadsave;
+              }
               next=0;
             }
 
@@ -1119,6 +1136,7 @@ parseline:
                 savehistory[savehistory_idx - 1] = 0;
                 savehistory_idx--;
                 skipnexthistory=1;
+                DispRollback();
                 goto seektoline;
             }
 
