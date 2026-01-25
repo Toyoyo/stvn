@@ -38,11 +38,15 @@
 
 #define SaveMacro() ({\
   next=readKeyBoardStatus();\
-  while(next!=10 && next!=11 && next!=12 && next!=13 && next!=2) {\
+  while(next != 2 && (next < 10 || next > 19)) {\
     next=readKeyBoardStatus();\
   }\
   if(next!=2) {\
-    snprintf(savefile, 14, "data\\sav%d.sav", next-9);\
+    if(next == 19) {\
+      snprintf(savefile, 14, "data\\sav0.sav");\
+    } else {\
+      snprintf(savefile, 14, "data\\sav%d.sav", next-9);\
+    }\
     FILE* fd=fopen(savefile, "w");\
     memcpy(videoram, background, 25600);\
     if(fd != NULL) {\
@@ -218,83 +222,121 @@ static int readKeyBoardStatus() {
     if ((char)key == '4') {
       return 13;
     }
+    if ((char)key == '5') {
+      return 14;
+    }
+    if ((char)key == '6') {
+      return 15;
+    }
+    if ((char)key == '7') {
+      return 16;
+    }
+    if ((char)key == '8') {
+      return 17;
+    }
+    if ((char)key == '9') {
+      return 18;
+    }
+    if ((char)key == '0') {
+      return 19;
+    }
   }
 }
 
 static void DispLoading() {
-  locate(35,8);
-  printf("- Loading -");
-  locate(35,9);
-  if(fileexists("data\\sav1.sav") == 0) {
-    printf("1: USED    ");
-  } else {
-    printf("1: EMPTY   ");
-  }
-  locate(35,10);
-  if(fileexists("data\\sav2.sav") == 0) {
-    printf("2: USED    ");
-  } else {
-    printf("2: EMPTY   ");
-  }
-  locate(35,11);
-  if(fileexists("data\\sav3.sav") == 0) {
-    printf("3: USED    ");
-  } else {
-    printf("3: EMPTY   ");
-  }
-  locate(35,12);
-  if(fileexists("data\\sav4.sav") == 0) {
-    printf("4: USED    ");
-  } else {
-    printf("4: EMPTY   ");
-  }
-  locate(35,13);
-  printf("[q] : quit ");
-  fflush(stdout);
-
+  char savepath[15] = {0};
   char* videoram = Logbase();
-  DrawHLine(280, 128, 368);
-  DrawHLine(280, 224, 368);
-  DrawVLine(280, 128, 224);
-  DrawVLine(368, 128, 224);
-}
 
-static void DispSaving() {
-  locate(35,8);
-  printf("- Saving -");
-  locate(35,9);
-  if(fileexists("data\\sav1.sav") == 0) {
-    printf("1: USED   ");
-  } else {
-    printf("1: EMPTY  ");
+  // Fill dialog area with white (0x00)
+  // Area: x=216-424 (bytes 27-53), y=112-240
+  for(int y=112; y<=240; y++) {
+    memset(videoram + y*80 + 27, 0x00, 26);
   }
-  locate(35,10);
-  if(fileexists("data\\sav2.sav") == 0) {
-    printf("2: USED   ");
-  } else {
-    printf("2: EMPTY  ");
+
+  locate(35,7);
+  printf("- Loading -");
+  // Left column: 1-5
+  for(int i=1; i<=5; i++) {
+    locate(28, 7+i);
+    snprintf(savepath, 15, "data\\sav%d.sav", i);
+    if(fileexists(savepath) == 0) {
+      printf("%d: USED ", i);
+    } else {
+      printf("%d: EMPTY", i);
+    }
   }
-  locate(35,11);
-  if(fileexists("data\\sav3.sav") == 0) {
-    printf("3: USED   ");
-  } else {
-    printf("3: EMPTY  ");
+  // Right column: 6-9, 0
+  for(int i=6; i<=9; i++) {
+    locate(44, 2+i);
+    snprintf(savepath, 15, "data\\sav%d.sav", i);
+    if(fileexists(savepath) == 0) {
+      printf("%d: USED ", i);
+    } else {
+      printf("%d: EMPTY", i);
+    }
   }
-  locate(35,12);
-  if(fileexists("data\\sav4.sav") == 0) {
-    printf("4: USED   ");
+  locate(44, 12);
+  if(fileexists("data\\sav0.sav") == 0) {
+    printf("0: USED ");
   } else {
-    printf("4: EMPTY  ");
+    printf("0: EMPTY");
   }
-  locate(35,13);
+  locate(35,14);
   printf("[q] : quit");
   fflush(stdout);
 
+  DrawHLine(216, 112, 424);
+  DrawHLine(216, 240, 424);
+  DrawVLine(216, 112, 240);
+  DrawVLine(424, 112, 240);
+}
+
+static void DispSaving() {
+  char savepath[15] = {0};
   char* videoram = Logbase();
-  DrawHLine(280, 128, 360);
-  DrawHLine(280, 224, 360);
-  DrawVLine(280, 128, 224);
-  DrawVLine(360, 128, 224);
+
+  // Fill dialog area with white (0x00)
+  // Area: x=216-424 (bytes 27-53), y=112-240
+  for(int y=112; y<=240; y++) {
+    memset(videoram + y*80 + 27, 0x00, 26);
+  }
+
+  locate(35,7);
+  printf("- Saving -");
+  // Left column: 1-5
+  for(int i=1; i<=5; i++) {
+    locate(28, 7+i);
+    snprintf(savepath, 15, "data\\sav%d.sav", i);
+    if(fileexists(savepath) == 0) {
+      printf("%d: USED ", i);
+    } else {
+      printf("%d: EMPTY", i);
+    }
+  }
+  // Right column: 6-9, 0
+  for(int i=6; i<=9; i++) {
+    locate(44, 2+i);
+    snprintf(savepath, 15, "data\\sav%d.sav", i);
+    if(fileexists(savepath) == 0) {
+      printf("%d: USED ", i);
+    } else {
+      printf("%d: EMPTY", i);
+    }
+  }
+  locate(44, 12);
+  if(fileexists("data\\sav0.sav") == 0) {
+    printf("0: USED ");
+  } else {
+    printf("0: EMPTY");
+  }
+  locate(35,14);
+  printf("[q] : quit");
+  fflush(stdout);
+
+  DrawHLine(216, 112, 424);
+  DrawHLine(216, 240, 424);
+  DrawVLine(216, 112, 240);
+  DrawVLine(424, 112, 240);
 }
 
 static void DispHelp() {
@@ -679,7 +721,7 @@ parseline:
             loadsave=1;
             memcpy(background, videoram, 25600);
             DispLoading();
-            while(next!=10 && next!=11 && next!=12 && next!=13 && next!=2) {
+            while(next != 2 && (next < 10 || next > 19)) {
                 next=readKeyBoardStatus();
             }
             memcpy(videoram, background, 25600);
@@ -687,7 +729,11 @@ parseline:
             lblloadsave:
             // Effective loading.
             if(next!=2) {
-              snprintf(savefile, 14, "data\\sav%d.sav", next-9);
+              if(next == 19) {
+                snprintf(savefile, 14, "data\\sav0.sav");
+              } else {
+                snprintf(savefile, 14, "data\\sav%d.sav", next-9);
+              }
               if(fileexists(savefile) == 0) {
                 FILE* savefp = fopen(savefile, "r");
                 char savestate[17] = {0};
@@ -1097,13 +1143,17 @@ parseline:
             if(next == 4) {
               memcpy(background, videoram, 25600);
               DispLoading();
-              while(next!=10 && next!=11 && next!=12 && next!=13 && next!=2) {
+              while(next != 2 && (next < 10 || next > 19)) {
                 next=readKeyBoardStatus();
               }
-              snprintf(savefile, 14, "data\\sav%d.sav", next-9);
+              if(next == 19) {
+                snprintf(savefile, 14, "data\\sav0.sav");
+              } else {
+                snprintf(savefile, 14, "data\\sav%d.sav", next-9);
+              }
+              memcpy(videoram, background, 25600);
               if(fileexists(savefile) == 0) goto lblloadsave;
               next=0;
-              memcpy(videoram, background, 25600);
             }
 
             // Don't go back if we can't
