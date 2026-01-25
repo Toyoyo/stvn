@@ -691,14 +691,14 @@ parseline:
             if(next!=2) {
               snprintf(savefile, 14, "data\\sav%d.sav", next-9);
               if(fileexists(savefile) == 0) {
-                int fd=open(savefile, O_RDONLY);
+                FILE* savefp = fopen(savefile, "r");
                 char savestate[17] = {0};
                 char save_line[7] = {0};
                 char save_register[2] = {0};
                 char save_register_val=0;
                 int forceredraw=0;
                 save_linenb = 0;
-                read(fd, &savestate, 16);
+                fread(savestate, 1, 16, savefp);
 
                 // First, get the target line number
                 memcpy(save_line, savestate, 6);
@@ -713,38 +713,21 @@ parseline:
                 }
 
                 // Restore savehistory
-                char histline[16] = {0};
-                int histpos = 0;
-                char c;
-                int eof_reached = 0;
-                // Skip newline after header
-                if(read(fd, &c, 1) != 1) eof_reached = 1;
-                // Read savehistory_idx (second line)
-                if(!eof_reached) {
-                  while(read(fd, &c, 1) == 1 && c != '\n' && histpos < 15) {
-                    histline[histpos++] = c;
-                  }
-                  histline[histpos] = '\0';
-                  if(histpos == 0) eof_reached = 1;
-                }
-                if(!eof_reached) {
+                char histline[255] = {0};
+                // Skip newline after header and read savehistory_idx
+                if(fgets(histline, 255, savefp) != NULL && fgets(histline, 255, savefp) != NULL) {
                   savehistory_idx = atoi(histline);
                   memset(savehistory, 0, sizeof(savehistory));
                   // Read savehistory entries
                   for(int j=0; j<savehistory_idx && j<1000; j++) {
-                    memset(histline, 0, 16);
-                    histpos = 0;
-                    while(read(fd, &c, 1) == 1 && c != '\n' && histpos < 15) {
-                      histline[histpos++] = c;
-                    }
-                    if(histpos == 0) {
+                    if(fgets(histline, 255, savefp) == NULL) {
                       savehistory_idx = j;
                       break;
                     }
-                    histline[histpos] = '\0';
                     savehistory[j] = atoi(histline);
                   }
                 }
+                fclose(savefp);
                 skipnexthistory=1;
 
                 seektoline:
@@ -911,7 +894,6 @@ parseline:
                     }
                   }
                 }
-                close(fd);
 
                 // Now to display required sprites;
                 if(compare_sprites() != 0 || loadsave == 1) {
