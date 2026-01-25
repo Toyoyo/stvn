@@ -512,7 +512,6 @@ static void run() {
   FILE *script;
   FILE *config;
   long lineNumber = 0;
-  long prevLineNumber = 0;
   char* line;
   char picture[18] = {0};
   char oldpicture[18] = {0};
@@ -531,7 +530,6 @@ static void run() {
   int savehistory[1000] = {0};  // Track all savepointer assignments
   int savehistory_idx = 0;
   long save_linenb = 0;
-  int skipnextprev=0;
   int skipnexthistory=0;
   int loadsave=0;
 
@@ -754,7 +752,6 @@ parseline:
                 rewind(script);
                 lineNumber=0;
                 savepointer=0;
-                prevLineNumber=0;
                 willplaying=0;
                 spritecount=0;
 
@@ -817,7 +814,6 @@ parseline:
                   }
 
                   if(*line == 'S') {
-                    prevLineNumber = savepointer;
                     savepointer=lineNumber;
                   }
 
@@ -938,7 +934,6 @@ parseline:
                 // We're done, and the next action will be to display to current line.
                 // Which sould be a 'S' since they're the only ones advancing the save pointer.
                 loadsave=0;
-                skipnextprev=1;
                 break;
               }
             }
@@ -982,11 +977,6 @@ parseline:
         locate(0,20);
         printf("%s", line+1);
         fflush(stdout);
-        if(skipnextprev == 1) {
-          skipnextprev=0;
-        } else {
-          prevLineNumber=savepointer;
-        }
         savepointer=lineNumber;
         if(skipnexthistory == 1) {
           skipnexthistory=0;
@@ -1075,7 +1065,6 @@ parseline:
          savepointer=0;
          savehistory_idx=0;
          memset(savehistory, 0, sizeof(savehistory));
-         prevLineNumber=0;
          willplaying=0;
          spritecount=0;
       }
