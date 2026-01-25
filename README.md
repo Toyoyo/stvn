@@ -162,6 +162,8 @@ Supported operands:
 
 * 'E' : Manually erase the text box, reset character lines to 0
 
+* 'F' : Erase the history and return to the start of the script
+
 * 'X' : Trigger a visual effect.
 
   Syntax: ``X[XX]`` like ``X03``
