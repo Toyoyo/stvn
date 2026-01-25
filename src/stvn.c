@@ -260,9 +260,9 @@ static void DispLoadSave(char mode) {
   char* videoram = Logbase();
 
   // Fill dialog area with white (0x00)
-  // Area: x=216-424 (bytes 27-53), y=112-240
+  // Area: x=240-400 (bytes 30-50), y=112-240
   for(int y=112; y<=240; y++) {
-    memset(videoram + y*80 + 27, 0x00, 26);
+    memset(videoram + y*80 + 30, 0x00, 20);
   }
 
   locate(35,7);
@@ -270,7 +270,7 @@ static void DispLoadSave(char mode) {
 
   // Left column: 1-5
   for(int i=1; i<=5; i++) {
-    locate(28, 7+i);
+    locate(31, 7+i);
     snprintf(savepath, 15, "data\\sav%d.sav", i);
     if(fileexists(savepath) == 0) {
       printf("%d: USED ", i);
@@ -280,7 +280,7 @@ static void DispLoadSave(char mode) {
   }
   // Right column: 6-9, 0
   for(int i=6; i<=9; i++) {
-    locate(44, 2+i);
+    locate(41, 2+i);
     snprintf(savepath, 15, "data\\sav%d.sav", i);
     if(fileexists(savepath) == 0) {
       printf("%d: USED ", i);
@@ -288,7 +288,7 @@ static void DispLoadSave(char mode) {
       printf("%d: EMPTY", i);
     }
   }
-  locate(44, 12);
+  locate(41, 12);
   if(fileexists("data\\sav0.sav") == 0) {
     printf("0: USED ");
   } else {
@@ -298,10 +298,10 @@ static void DispLoadSave(char mode) {
   printf("[q] : quit");
   fflush(stdout);
 
-  DrawHLine(216, 112, 424);
-  DrawHLine(216, 240, 424);
-  DrawVLine(216, 112, 240);
-  DrawVLine(424, 112, 240);
+  DrawHLine(240, 112, 400);
+  DrawHLine(240, 240, 400);
+  DrawVLine(240, 112, 240);
+  DrawVLine(400, 112, 240);
 }
 
 static void DispHelp() {
