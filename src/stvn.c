@@ -36,17 +36,25 @@
 #define write_byte(value, address) (*address) = (__uint8_t)value
 #define read_byte(address) (*address)
 
+// Used to check a valid choice in Loading/Saving dialogs
+#define NoValidSaveChoice next != 2 && (next < 10 || next > 19)
+
+// Used to get the correct savestate filename in Loading/Saving dialogs
+#define HandleSaveFilename() ({\
+  if(next == 19) {\
+    snprintf(savefile, 14, "data\\sav0.sav");\
+  } else {\
+    snprintf(savefile, 14, "data\\sav%d.sav", next-9);\
+  }\
+})
+
 #define SaveMacro() ({\
   next=readKeyBoardStatus();\
-  while(next != 2 && (next < 10 || next > 19)) {\
+  while(NoValidSaveChoice) {\
     next=readKeyBoardStatus();\
   }\
   if(next!=2) {\
-    if(next == 19) {\
-      snprintf(savefile, 14, "data\\sav0.sav");\
-    } else {\
-      snprintf(savefile, 14, "data\\sav%d.sav", next-9);\
-    }\
+    HandleSaveFilename();\
     FILE* fd=fopen(savefile, "w");\
     memcpy(videoram, background, 25600);\
     if(fd != NULL) {\
@@ -243,7 +251,7 @@ static int readKeyBoardStatus() {
   }
 }
 
-static void DispLoading() {
+static void DispLoadSave(char mode) {
   char savepath[15] = {0};
   char* videoram = Logbase();
 
@@ -254,55 +262,8 @@ static void DispLoading() {
   }
 
   locate(35,7);
-  printf("- Loading -");
-  // Left column: 1-5
-  for(int i=1; i<=5; i++) {
-    locate(28, 7+i);
-    snprintf(savepath, 15, "data\\sav%d.sav", i);
-    if(fileexists(savepath) == 0) {
-      printf("%d: USED ", i);
-    } else {
-      printf("%d: EMPTY", i);
-    }
-  }
-  // Right column: 6-9, 0
-  for(int i=6; i<=9; i++) {
-    locate(44, 2+i);
-    snprintf(savepath, 15, "data\\sav%d.sav", i);
-    if(fileexists(savepath) == 0) {
-      printf("%d: USED ", i);
-    } else {
-      printf("%d: EMPTY", i);
-    }
-  }
-  locate(44, 12);
-  if(fileexists("data\\sav0.sav") == 0) {
-    printf("0: USED ");
-  } else {
-    printf("0: EMPTY");
-  }
-  locate(35,14);
-  printf("[q] : quit");
-  fflush(stdout);
+  printf("- %s -", mode == 0 ? "Loading" : "Saving");
 
-  DrawHLine(216, 112, 424);
-  DrawHLine(216, 240, 424);
-  DrawVLine(216, 112, 240);
-  DrawVLine(424, 112, 240);
-}
-
-static void DispSaving() {
-  char savepath[15] = {0};
-  char* videoram = Logbase();
-
-  // Fill dialog area with white (0x00)
-  // Area: x=216-424 (bytes 27-53), y=112-240
-  for(int y=112; y<=240; y++) {
-    memset(videoram + y*80 + 27, 0x00, 26);
-  }
-
-  locate(35,7);
-  printf("- Saving -");
   // Left column: 1-5
   for(int i=1; i<=5; i++) {
     locate(28, 7+i);
@@ -693,7 +654,7 @@ parseline:
           // Save
           if(next == 3) {
             memcpy(background, videoram, 25600);
-            DispSaving();
+            DispLoadSave(1);
             SaveMacro();
             memcpy(videoram, background, 25600);
           }
@@ -720,8 +681,8 @@ parseline:
           if(next == 4) {
             loadsave=1;
             memcpy(background, videoram, 25600);
-            DispLoading();
-            while(next != 2 && (next < 10 || next > 19)) {
+            DispLoadSave(0);
+            while(NoValidSaveChoice) {
                 next=readKeyBoardStatus();
             }
             memcpy(videoram, background, 25600);
@@ -729,11 +690,7 @@ parseline:
             lblloadsave:
             // Effective loading.
             if(next!=2) {
-              if(next == 19) {
-                snprintf(savefile, 14, "data\\sav0.sav");
-              } else {
-                snprintf(savefile, 14, "data\\sav%d.sav", next-9);
-              }
+              HandleSaveFilename();
               if(fileexists(savefile) == 0) {
                 FILE* savefp = fopen(savefile, "r");
                 char savestate[17] = {0};
@@ -1135,22 +1092,18 @@ parseline:
             if(next == 2) goto endprog;
             if(next == 3) {
               memcpy(background, videoram, 25600);
-              DispSaving();
+              DispLoadSave(1);
               SaveMacro();
               next=0;
               memcpy(videoram, background, 25600);
             }
             if(next == 4) {
               memcpy(background, videoram, 25600);
-              DispLoading();
-              while(next != 2 && (next < 10 || next > 19)) {
+              DispLoadSave(0);
+              while(NoValidSaveChoice) {
                 next=readKeyBoardStatus();
               }
-              if(next == 19) {
-                snprintf(savefile, 14, "data\\sav0.sav");
-              } else {
-                snprintf(savefile, 14, "data\\sav%d.sav", next-9);
-              }
+              HandleSaveFilename();
               memcpy(videoram, background, 25600);
               if(fileexists(savefile) == 0) goto lblloadsave;
               next=0;
