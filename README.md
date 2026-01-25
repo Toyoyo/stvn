@@ -35,7 +35,9 @@ STEST.VNS
 B20000
 ```
 'S' line is the script file
+
 'B' line is the SNDH buffer space
+
 Defaults: ``STVN.VNS`` & ``20000``
 
 ## Supported formats / limitations:
