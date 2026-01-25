@@ -39,6 +39,10 @@
 // Used to check a valid choice in Loading/Saving dialogs
 #define NoValidSaveChoice next != 2 && (next < 10 || next > 19)
 
+// Screen backup/restore
+#define RestoreScreen() memcpy(videoram, background, 25600)
+#define SaveScreen() memcpy(background, videoram, 25600)
+
 // Used to get the correct savestate filename in Loading/Saving dialogs
 #define HandleSaveFilename() ({\
   if(next == 19) {\
@@ -56,7 +60,7 @@
   if(next!=2) {\
     HandleSaveFilename();\
     FILE* fd=fopen(savefile, "w");\
-    memcpy(videoram, background, 25600);\
+    RestoreScreen();\
     if(fd != NULL) {\
       fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d\n", savepointer, \
         choicedata[0],\
@@ -89,7 +93,7 @@
     gzclose(gzf);\
     close(pfd);\
     memcpy(oldpicture, picture, 18);\
-    memcpy(videoram, background, 25600);\
+    RestoreScreen();\
   }\
 })
 
@@ -653,10 +657,10 @@ parseline:
 
           // Save
           if(next == 3) {
-            memcpy(background, videoram, 25600);
+            SaveScreen();
             DispLoadSave(1);
             SaveMacro();
-            memcpy(videoram, background, 25600);
+            RestoreScreen();
           }
 
           // Don't go back if we can't
@@ -669,23 +673,23 @@ parseline:
           }
 
           if(next == 6) {
-            memcpy(background, videoram, 25600);
+            SaveScreen();
             DispHelp();
             while(next!=2) {
                 next=readKeyBoardStatus();
             }
-            memcpy(videoram, background, 25600);
+            RestoreScreen();
           }
 
           // Load
           if(next == 4) {
             loadsave=1;
-            memcpy(background, videoram, 25600);
+            SaveScreen();
             DispLoadSave(0);
             while(NoValidSaveChoice) {
                 next=readKeyBoardStatus();
             }
-            memcpy(videoram, background, 25600);
+            RestoreScreen();
 
             lblloadsave:
             // Effective loading.
@@ -920,7 +924,7 @@ parseline:
               }
             }
             // In case we didn't load anything, restore the scene
-            memcpy(videoram, background, 25600);
+            RestoreScreen();
           }
           next=readKeyBoardStatus();
         }
@@ -943,7 +947,7 @@ parseline:
       }
 
       if(*line == 'R') {
-        memcpy(videoram, background, 25600);
+        RestoreScreen();
         reset_cursprites();
         spritecount=0;
       }
@@ -1091,20 +1095,20 @@ parseline:
             next=readKeyBoardStatus();
             if(next == 2) goto endprog;
             if(next == 3) {
-              memcpy(background, videoram, 25600);
+              SaveScreen();
               DispLoadSave(1);
               SaveMacro();
               next=0;
-              memcpy(videoram, background, 25600);
+              RestoreScreen();
             }
             if(next == 4) {
-              memcpy(background, videoram, 25600);
+              SaveScreen();
               DispLoadSave(0);
               while(NoValidSaveChoice) {
                 next=readKeyBoardStatus();
               }
               HandleSaveFilename();
-              memcpy(videoram, background, 25600);
+              RestoreScreen();
               if(fileexists(savefile) == 0) goto lblloadsave;
               next=0;
             }
@@ -1119,12 +1123,12 @@ parseline:
             }
 
             if(next == 6) {
-              memcpy(background, videoram, 25600);
+              SaveScreen();
               DispHelp();
               while(next!=2) {
                   next=readKeyBoardStatus();
               }
-              memcpy(videoram, background, 25600);
+              RestoreScreen();
             }
 
           }
