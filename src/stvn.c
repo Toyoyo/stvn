@@ -145,7 +145,6 @@ static int compare_sprites() {
 
 // Grad' again
 #define DrawVLine(x1, y1, y2) ({\
-  int pt_2 = y2*640 + x1;\
   unsigned char* ptr = videoram + (y1 * 640 + x1) / 8;\
   unsigned char* ptr_end = videoram + (y2 * 640 + x1) / 8;\
   unsigned char mask = 1 << (7 - x1 % 8);\
