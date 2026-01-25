@@ -47,7 +47,7 @@ Defaults: ``STVN.VNS`` & ``20000``
 Both can be gzipped.
 
 * Savestates: 4 supported, adding more would be trivial.
-  10 VN choices binary "registers", adding more wouldn't be very hard.
+  10 VN choices "registers", adding more wouldn't be very hard.
   Scripts can be 999999 lines long.
 
 * Rollback history up to 1000 entries, included in savestates.
