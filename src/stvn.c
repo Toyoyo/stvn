@@ -145,7 +145,6 @@ static int compare_sprites() {
 
 // Grad' again
 #define DrawVLine(x1, y1, y2) ({\
-  int pt_1 = y1*640 + x1;\
   int pt_2 = y2*640 + x1;\
   unsigned char* ptr = videoram + (y1 * 640 + x1) / 8;\
   unsigned char* ptr_end = videoram + (y2 * 640 + x1) / 8;\
@@ -696,7 +695,6 @@ parseline:
                 char save_line[7] = {0};
                 char save_register[2] = {0};
                 char save_register_val=0;
-                int forceredraw=0;
                 save_linenb = 0;
                 fread(savestate, 1, 16, savefp);
 
