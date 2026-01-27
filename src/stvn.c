@@ -707,10 +707,10 @@ parseline:
             RestoreScreen();
             lblloadsave:
             // Effective loading.
-            DispLoading();
             if(next!=2) {
               HandleSaveFilename();
               if(fileexists(savefile) == 0) {
+                DispLoading();
                 FILE* savefp = fopen(savefile, "r");
                 char savestate[17] = {0};
                 char save_line[7] = {0};
