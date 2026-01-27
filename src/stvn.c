@@ -119,7 +119,7 @@
     char playready=0;\
     gzread(sndfile, tuneptr, sndhbuffersize);\
     gzclose(sndfile);\
-    if (is_ice_data (tuneptr)) {\
+    if (is_ice_data(tuneptr)) {\
       char *unicedsndh;\
       int unicedsize=ice_decrunched_length(tuneptr);\
       if(unicedsize <= sndhbuffersize) {\
@@ -321,6 +321,12 @@ static void DispLoadSave(char mode) {
   locate(35,7);
   printf("- %s -", mode == 0 ? "Loading" : "Saving");
 
+  // Draw the border
+  DrawHLine(240, 112, 400);
+  DrawHLine(240, 240, 400);
+  DrawVLine(240, 112, 240);
+  DrawVLine(400, 112, 240);
+
   // Left column: 1-5
   for(int i=1; i<=5; i++) {
     locate(31, 7+i);
@@ -350,11 +356,6 @@ static void DispLoadSave(char mode) {
   locate(35,14);
   printf("[q] : quit");
   fflush(stdout);
-
-  DrawHLine(240, 112, 400);
-  DrawHLine(240, 240, 400);
-  DrawVLine(240, 112, 240);
-  DrawVLine(400, 112, 240);
 }
 
 static void DispHelp() {
@@ -689,7 +690,6 @@ static void run() {
     if(line == NULL) goto endprog;
     lineNumber = lineNumber + 1;
 
-parseline:
     // Empty lines are simply ignored.
     // Feel free to make a readable script
     if(strlen(line) > 0) {
