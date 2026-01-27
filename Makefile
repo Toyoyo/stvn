@@ -4,19 +4,21 @@ DIST_DIR=./dist
 RSC_DIR=./rsc
 LIBCMINI=./deps/libcmini
 ZLIB=./deps/zlib-1.3.1
+ICE=./deps/pack-ice
+UNICE=./deps/unice68
 
 CROSS=m68k-atari-mintelf-
 CC=$(CROSS)gcc
 AR=$(CROSS)ar
 RANLIB=$(CROSS)ranlib
-CFLAGS=-c -nostdlib -nostdinc -I$(LIBCMINI)/include -I$(ZLIB)
-LDFLAGS=-s -Wl,--gc-sections -fomit-frame-pointer $(ZLIB)/libz.a -L$(LIBCMINI)/build -lcmini -lgcc
+CFLAGS=-c -nostdlib -nostdinc -I$(LIBCMINI)/include -I$(ZLIB) -I${ICE}
+LDFLAGS=-s -Wl,--gc-sections -fomit-frame-pointer $(ZLIB)/libz.a -L$(LIBCMINI)/build -L$(ICE) -lice -lcmini -lgcc
 
 # VASM PARAMETERS
 ASM=vasmm68k_mot
 ASMFLAGS=-Felf -quiet -x -m68000 -spaces -showopt
 
-all: prepare libcmini zlib dist compress
+all: prepare libcmini ice zlib dist compress
 
 prepare:
 	mkdir -p $(BUILD_DIR)
@@ -25,6 +27,9 @@ clean-compile : clean buffer.o screen.o main.o
 
 libcmini:
 	cd $(LIBCMINI) ; make
+
+ice:
+	cd $(ICE) ; make CFLAGS="-nostdlib -nostdinc -I../../$(LIBCMINI)/include" LDFLAGS="-L../../$(LIBCMINI)/build -lcmini -lgcc"
 
 zlib:
 	cd $(ZLIB) ; chmod +x ./configure
@@ -61,3 +66,4 @@ clean:
 	rm -rf $(DIST_DIR)
 	cd $(LIBCMINI) ; make clean
 	cd $(ZLIB) ; make distclean
+	cd $(ICE) ; make clean

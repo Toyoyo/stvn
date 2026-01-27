@@ -24,8 +24,9 @@
 #include <string.h>
 #include <zlib.h>
 #include <ext.h>
+#include <ice.h>
 
-// SNDH routines, including our gcc function call convention wrapper
+// SNDH routines, adapted to m68k-atari-mintelf toolchain argument passing convention
 #include "sndh.h"
 
 // Misc macros, like Line-a and VT52 stuff
@@ -111,6 +112,78 @@
   }\
 })
 
+// Handle optionally gzipped and/or ice-packed SNDH files
+#define SNDHPlayMacro() ({\
+  sndfile=gzopen(musicfile,"rb");\
+  if(sndfile != NULL) {\
+    char playready=0;\
+    gzread(sndfile, tuneptr, sndhbuffersize);\
+    gzclose(sndfile);\
+    if (is_ice_data (tuneptr)) {\
+      char *unicedsndh;\
+      int unicedsize=ice_decrunched_length(tuneptr);\
+      if(unicedsize <= sndhbuffersize) {\
+        unicedsndh=malloc(ice_decrunched_length(tuneptr));\
+        if(unicedsndh) {\
+          ice_decrunch(tuneptr, unicedsndh);\
+          memcpy(tuneptr, unicedsndh, unicedsize);\
+          free(unicedsndh);\
+          playready=1;\
+        } else {\
+          playready=0;\
+        }\
+      } else {\
+        playready=0;\
+      }\
+    } else {\
+      playready=1;\
+    }\
+    if(playready == 1) {\
+      SNDH_GetTuneInfo(tuneptr,&mytune);\
+      SNDH_PlayTune(&mytune,0);\
+      isplaying=1;\
+    } else {\
+      isplaying=0;\
+    }\
+  } else {\
+    isplaying=0;\
+  }\
+})
+
+// Grad' again
+#define DrawVLine(x1, y1, y2) ({\
+  unsigned char* ptr = videoram + (y1 * 640 + x1) / 8;\
+  unsigned char* ptr_end = videoram + (y2 * 640 + x1) / 8;\
+  unsigned char mask = 1 << (7 - x1 % 8);\
+  for(; ptr <= ptr_end; ptr += 640 / 8) {\
+    *ptr |= mask;\
+  }\
+})
+
+// Grad' again (bis)
+#define DrawHLine(x1, y1, x2) ({\
+  unsigned char *ptr;\
+  unsigned char *ptr_end;\
+  ptr = videoram + (y1 * 640 + x1) / 8;\
+  ptr_end = videoram + (y1 * 640 + x2) / 8;\
+  if (ptr == ptr_end) {\
+    *ptr |= ((1 << (8 - x1 % 8)) - 1) & ~((1 << (7 - x2 % 8)) - 1);\
+  } else {\
+    *ptr++ |= (1 << (8 - x1 % 8)) - 1;\
+    while (ptr < ptr_end) {\
+      *ptr++ = 0xff;\
+    }\
+    *ptr |= ~((1 << (7 - x2 % 8)) - 1);\
+  }\
+})
+
+#define RedrawBorder() ({\
+  DrawHLine(0, 320, 640);\
+  DrawHLine(0, 399, 640);\
+  DrawVLine(0, 320, 399);\
+  DrawVLine(639, 320, 399);\
+})
+
 char* get_line(FILE *fp) {
   static char newline[256] = {0};
   if (fp == NULL) {
@@ -172,40 +245,6 @@ static int compare_sprites() {
   }
   return 0;
 }
-
-// Grad' again
-#define DrawVLine(x1, y1, y2) ({\
-  unsigned char* ptr = videoram + (y1 * 640 + x1) / 8;\
-  unsigned char* ptr_end = videoram + (y2 * 640 + x1) / 8;\
-  unsigned char mask = 1 << (7 - x1 % 8);\
-  for(; ptr <= ptr_end; ptr += 640 / 8) {\
-    *ptr |= mask;\
-  }\
-})
-
-// Grad' again (bis)
-#define DrawHLine(x1, y1, x2) ({\
-  unsigned char *ptr;\
-  unsigned char *ptr_end;\
-  ptr = videoram + (y1 * 640 + x1) / 8;\
-  ptr_end = videoram + (y1 * 640 + x2) / 8;\
-  if (ptr == ptr_end) {\
-    *ptr |= ((1 << (8 - x1 % 8)) - 1) & ~((1 << (7 - x2 % 8)) - 1);\
-  } else {\
-    *ptr++ |= (1 << (8 - x1 % 8)) - 1;\
-    while (ptr < ptr_end) {\
-      *ptr++ = 0xff;\
-    }\
-    *ptr |= ~((1 << (7 - x2 % 8)) - 1);\
-  }\
-})
-
-#define RedrawBorder() ({\
-  DrawHLine(0, 320, 640);\
-  DrawHLine(0, 399, 640);\
-  DrawVLine(0, 320, 399);\
-  DrawVLine(639, 320, 399);\
-})
 
 // non-blocking keyboard reading routine & handling
 // Space -> read next script line
@@ -900,17 +939,7 @@ parseline:
 
                     SNDHTune mytune;
                     memcpy(oldmusicfile, musicfile, 12);
-
-                    sndfile=gzopen(musicfile,"rb");
-                    if(sndfile != NULL) {
-                      gzread(sndfile, tuneptr, sndhbuffersize);
-                      gzclose(sndfile);
-                      SNDH_GetTuneInfo(tuneptr,&mytune);
-                      SNDH_PlayTune(&mytune,0);
-                      isplaying=1;
-                    } else {
-                      isplaying=0;
-                    }
+                    SNDHPlayMacro();
                   }
                 }
 
@@ -1023,17 +1052,7 @@ parseline:
 
             if(isplaying == 1) SNDH_StopTune();
             isplaying=0;
-            sndfile=gzopen(musicfile,"rb");
-
-            if(sndfile != NULL) {
-              gzread(sndfile, tuneptr, sndhbuffersize);
-              gzclose(sndfile);
-              SNDH_GetTuneInfo(tuneptr,&mytune);
-              SNDH_PlayTune(&mytune,0);
-              isplaying=1;
-            } else {
-              isplaying=0;
-            }
+            SNDHPlayMacro();
           }
         }
       }

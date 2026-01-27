@@ -99,9 +99,11 @@ Supported operands:
 
   Syntax: ``P[file]`` like ``PFILE.SND``
 
-  Expected format is uncompressed SNDH (use unice68), but can and should be gzipped, and is loaded entirely before starting its playing routine.
+  Expected format is SNDH, optionally ICE-packed and/or gzipped, and is loaded entirely before starting its playing routine.
 
   This uses gwEm's sndhlib code, which should be pretty robust, but I'm not responsible for bugged replay routines in SNDH files...
+
+  ICE depacking is done with `pack-ice` found at https://github.com/larsbrinkhoff/pack-ice which is pretty slow but should be compatible with the vast majority of SNDH files.
 
   Note: Be sure to adjust the 'B' Line in STVN.INI to match the *uncompressed* size of your largest tune. The default is 20000 bytes.
 
