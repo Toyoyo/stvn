@@ -5,7 +5,6 @@ RSC_DIR=./rsc
 LIBCMINI=./deps/libcmini
 ZLIB=./deps/zlib-1.3.1
 ICE=./deps/pack-ice
-UNICE=./deps/unice68
 
 CROSS=m68k-atari-mintelf-
 CC=$(CROSS)gcc
