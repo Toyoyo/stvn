@@ -197,6 +197,9 @@ char* get_line(FILE *fp) {
   if (len > 0 && newline[len - 1] == '\n') {
     newline[len - 1] = '\0';
   }
+  if (len > 0 && newline[len - 2] == '\r') {
+    newline[len - 2] = '\0';
+  }
   return newline;
 }
 
@@ -652,10 +655,10 @@ static void run() {
     }
     fclose(config);
   } else {
-    printf("STVN.INI not found, using defaults:.\n");
-    printf("Script file: STVN.VNS\n");
-    printf("Maximum SNDH Size: 20000 bytes\n");
-    printf("Press any key to continue...\n");
+    printf("STVN.INI not found, using defaults:.\r\n");
+    printf("Script file: STVN.VNS\r\n");
+    printf("Maximum SNDH Size: 20000 bytes\r\n");
+    printf("Press any key to continue...\r\n");
     fflush(stdout);
     Crawcin();
   }
@@ -673,8 +676,8 @@ static void run() {
   script=fopen(scriptfile, "r");
 
   if(script == NULL) {
-    printf("Opening >%s< failed.\n", scriptfile);
-    printf("Press any key to quit...\n");
+    printf("Opening >%s< failed.\r\n", scriptfile);
+    printf("Press any key to quit...\r\n");
     fflush(stdout);
     Crawcin();
     free(tuneptr);
