@@ -197,7 +197,7 @@ char* get_line(FILE *fp) {
   if (len > 0 && newline[len - 1] == '\n') {
     newline[len - 1] = '\0';
   }
-  if (len > 0 && newline[len - 2] == '\r') {
+  if (len > 1 && newline[len - 2] == '\r') {
     newline[len - 2] = '\0';
   }
   return newline;
