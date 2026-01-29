@@ -213,7 +213,7 @@ static sprite currentsprites[256];
 static sprite previoussprites[256];
 static void backup_spritearray() {
   int i;
-  for(i=0; i<255; i++) {
+  for(i=0; i<=255; i++) {
     previoussprites[i].x = currentsprites[i].x;
     previoussprites[i].y = currentsprites[i].y;
     if(strlen(currentsprites[i].file) > 0) {
