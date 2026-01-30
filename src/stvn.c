@@ -1188,6 +1188,9 @@ static void run() {
           memcpy(effect, line+1, 2);
           char effectnum=atoi(effect);
 
+          // Flush keyboard buffer before rendering effect
+          while(Cconis()) Crawcin();
+
           // FxVWipeDown set
           if(effectnum == 1) FxVWipeDown(255);
           if(effectnum == 2) FxVWipeDown(0);
@@ -1307,6 +1310,9 @@ static void run() {
             FxCircleIn(0);
             FxCircleIn(255);
           }
+
+          // Flush keyboard buffer after rendering effect
+          while(Cconis()) Crawcin();
         }
       }
 
