@@ -908,6 +908,23 @@ static void run() {
                     jend:
                    ;
                   }
+
+                  // 'V' : Set a register to a value
+                  if(*line == 'V') {
+                    if(strlen(line) == 3) {
+                      char registername_s[2] = {0};
+                      memcpy(registername_s, line+1, 1);
+                      char registervalue_s[2] = {0};
+                      memcpy(registervalue_s, line+2, 1);
+
+                      int registername_i=atoi(registername_s);
+                      char registervalue_i=(char)atoi(registervalue_s);
+
+                      if(registername_i >= 0 && registername_i < 10 && registervalue_i >= 0 && registervalue_i < 10 ) {
+                        choicedata[registername_i] = registervalue_i;
+                      }
+                    }
+                  }
                 }
                 // We should have everything we need, now let's restorethings
 
@@ -1108,6 +1125,23 @@ static void run() {
           if(choicedata[selectedregister] == selectedchoice) {
             memcpy(jumplabel, line+3, 6);
             goto jumptolabel;
+          }
+        }
+      }
+
+      // 'V' : Set a register to a value
+      if(*line == 'V') {
+        if(strlen(line) == 3) {
+          char registername_s[2] = {0};
+          memcpy(registername_s, line+1, 1);
+          char registervalue_s[2] = {0};
+          memcpy(registervalue_s, line+2, 1);
+
+          int registername_i=atoi(registername_s);
+          char registervalue_i=(char)atoi(registervalue_s);
+
+          if(registername_i >= 0 && registername_i < 10 && registervalue_i >= 0 && registervalue_i < 10 ) {
+            choicedata[registername_i] = registervalue_i;
           }
         }
       }

@@ -168,6 +168,10 @@ Supported operands:
 
 * 'F' : Erase the history and return to the start of the script
 
+* 'V' : Set a register at a value
+
+  Syntax: ``V[register number][Value]`` like ``V19`` meaning "Set value 9 on register 1"
+
 * 'X' : Trigger a visual effect.
 
   Syntax: ``X[XX]`` like ``X03``
