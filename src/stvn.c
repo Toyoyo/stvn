@@ -918,10 +918,10 @@ static void run() {
                       memcpy(registervalue_s, line+2, 1);
 
                       int registername_i=atoi(registername_s);
-                      char registervalue_i=(char)atoi(registervalue_s);
+                      int registervalue_i=atoi(registervalue_s);
 
                       if(registername_i >= 0 && registername_i < 10 && registervalue_i >= 0 && registervalue_i < 10 ) {
-                        choicedata[registername_i] = registervalue_i;
+                        choicedata[registername_i] = (char)registervalue_i;
                       }
                     }
                   }
@@ -1138,10 +1138,10 @@ static void run() {
           memcpy(registervalue_s, line+2, 1);
 
           int registername_i=atoi(registername_s);
-          char registervalue_i=(char)atoi(registervalue_s);
+          int registervalue_i=(char)atoi(registervalue_s);
 
           if(registername_i >= 0 && registername_i < 10 && registervalue_i >= 0 && registervalue_i < 10 ) {
-            choicedata[registername_i] = registervalue_i;
+            choicedata[registername_i] = (char)registervalue_i;
           }
         }
       }
