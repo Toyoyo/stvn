@@ -1172,7 +1172,7 @@ static void run() {
             }
 
           }
-          choicedata[selectedregister] = next - 10;
+          choicedata[selectedregister] = next - 9;
         }
       }
 
