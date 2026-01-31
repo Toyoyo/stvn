@@ -18,7 +18,7 @@ TWhat do I do?
 T1:Stay?
 T2:Leave?
 C02
-B0LSC2
+B01LSCR2
 SKana
 TI want to say something too!
 A500000HINA.SPZ
@@ -29,7 +29,7 @@ W
 SHinata
 TAnyway...
 W
-LSC2
+LSCR2
 Pcubase.snd
 ISTREET01.PI3
 SHinata
@@ -50,15 +50,15 @@ TTadaima!
 TThat's nice.
 A200000HINA.SPZ
 W
-B0LSC3
+B0LSCR3
 SHinata
 TBut I'll need to quit soon.
 W
 SHinata
 TSadly
 W
-JLSC4
-LSC3
+JLSCR4
+LSCR3
 SHinata
 TOk!
 W
@@ -68,4 +68,4 @@ W
 SHinata
 TThen take a nap.
 W
-LSC4
+LSCR4
