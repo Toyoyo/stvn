@@ -97,6 +97,31 @@
   }\
 })
 
+#define DeleteMacro() ({\
+  next=readKeyBoardStatus();\
+  while(NoValidSaveChoice) {\
+    next=readKeyBoardStatus();\
+  }\
+  if(next!=2) {\
+    HandleSaveFilename();\
+    if(fileexists(savefile) == 0) remove(savefile);\
+  }\
+})
+
+#define ParseVCommand() ({\
+  if (strlen(line) == 3) {\
+    char registername_s[2] = {0};\
+    memcpy(registername_s, line+1, 1);\
+    char registervalue_s[2] = {0};\
+    memcpy(registervalue_s, line+2, 1);\
+    int registername_i = atoi(registername_s);\
+    int registervalue_i = atoi(registervalue_s);\
+    if (registername_i >= 0 && registername_i < 10 && registervalue_i >= 0 && registervalue_i < 10) {\
+      choicedata[registername_i] = (char)registervalue_i;\
+    }\
+  }\
+})
+
 // I definitely use this too much to not actually define it properly
 #define LoadBackground() ({\
   int pfd=open(picture, 0);\
@@ -278,6 +303,9 @@ static int readKeyBoardStatus() {
     if ((char)key == 'h') {
       return 6;
     }
+    if ((char)key == 'e') {
+      return 8;
+    }
     if ((char)key == '1') {
       return 10;
     }
@@ -322,7 +350,9 @@ static void DispLoadSave(char mode) {
   }
 
   locate(35,7);
-  printf("- %s -", mode == 0 ? "Loading" : "Saving");
+  if(mode == 0) printf("- Loading -");
+  if(mode == 1) printf("- Saving -");
+  if(mode == 2) printf("- Delete -");
 
   // Draw the border
   DrawHLine(240, 112, 400);
@@ -719,6 +749,13 @@ static void run() {
             RestoreScreen();
           }
 
+          if(next == 8) {
+            SaveScreen();
+            DispLoadSave(2);
+            DeleteMacro();
+            RestoreScreen();
+          }
+
           // Don't go back if we can't
           if(next == 5 && savehistory_idx >= 2) {
             save_linenb = savehistory[savehistory_idx - 2];
@@ -911,19 +948,7 @@ static void run() {
 
                   // 'V' : Set a register to a value
                   if(*line == 'V') {
-                    if(strlen(line) == 3) {
-                      char registername_s[2] = {0};
-                      memcpy(registername_s, line+1, 1);
-                      char registervalue_s[2] = {0};
-                      memcpy(registervalue_s, line+2, 1);
-
-                      int registername_i=atoi(registername_s);
-                      int registervalue_i=atoi(registervalue_s);
-
-                      if(registername_i >= 0 && registername_i < 10 && registervalue_i >= 0 && registervalue_i < 10 ) {
-                        choicedata[registername_i] = (char)registervalue_i;
-                      }
-                    }
+                    ParseVCommand();
                   }
                 }
                 // We should have everything we need, now let's restorethings
@@ -1131,19 +1156,7 @@ static void run() {
 
       // 'V' : Set a register to a value
       if(*line == 'V') {
-        if(strlen(line) == 3) {
-          char registername_s[2] = {0};
-          memcpy(registername_s, line+1, 1);
-          char registervalue_s[2] = {0};
-          memcpy(registervalue_s, line+2, 1);
-
-          int registername_i=atoi(registername_s);
-          int registervalue_i=(char)atoi(registervalue_s);
-
-          if(registername_i >= 0 && registername_i < 10 && registervalue_i >= 0 && registervalue_i < 10 ) {
-            choicedata[registername_i] = (char)registervalue_i;
-          }
-        }
+        ParseVCommand();
       }
 
       // 'C': Offer a choice and store it in a register
@@ -1169,6 +1182,13 @@ static void run() {
               SaveScreen();
               DispLoadSave(1);
               SaveMacro();
+              next=0;
+              RestoreScreen();
+            }
+            if(next == 8) {
+              SaveScreen();
+              DispLoadSave(2);
+              DeleteMacro();
               next=0;
               RestoreScreen();
             }
