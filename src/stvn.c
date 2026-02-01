@@ -838,6 +838,7 @@ static void run() {
                 // Skip newline after header and read savehistory_idx
                 if(fgets(histline, 255, savefp) != NULL && fgets(histline, 255, savefp) != NULL) {
                   savehistory_idx = atoi(histline);
+                  if(savehistory_idx > 999) savehistory_idx=999;
                   memset(savehistory, 0, sizeof(savehistory));
                   // Read savehistory entries
                   for(int j=0; j<savehistory_idx && j<1000; j++) {
@@ -872,7 +873,7 @@ static void run() {
                   // So we'll get the last background picture to draw
                   // As this is supposed to refresh the screen, this invalidate previous sprites
                   if(*line == 'I') {
-                    int filelen=strlen(line);
+                    int filelen=strlen(line)-1;
                     if(filelen > 12) filelen=12;
                     memset(picture, 0, 18);
                     snprintf(picture, 6, "DATA\\");
