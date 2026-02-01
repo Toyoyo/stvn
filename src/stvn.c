@@ -77,7 +77,8 @@
     FILE* fd=fopen(savefile, "w");\
     RestoreScreen();\
     if(fd != NULL) {\
-      fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d\n", savepointer, \
+      int _err = 0;\
+      _err |= fprintf(fd, "%06d%d%d%d%d%d%d%d%d%d%d\n", savepointer, \
         choicedata[0],\
         choicedata[1],\
         choicedata[2],\
@@ -87,12 +88,23 @@
         choicedata[6],\
         choicedata[7],\
         choicedata[8],\
-        choicedata[9]);\
-      fprintf(fd, "%d\n", savehistory_idx);\
+        choicedata[9]) < 0;\
+      _err |= fprintf(fd, "%d\n", savehistory_idx) < 0;\
       for(int i=0; i<savehistory_idx; i++) {\
-        fprintf(fd, "%d\n", savehistory[i]);\
+        _err |= fprintf(fd, "%d\n", savehistory[i]) < 0;\
       }\
-      fclose(fd);\
+      _err |= fclose(fd) != 0;\
+      if(_err) {\
+        locate(0,0);\
+        printf("Save failed! Press 'q'...");\
+        fflush(stdout);\
+        while(readKeyBoardStatus() != 2);\
+      }\
+    } else {\
+      locate(0,0);\
+      printf("Save failed! Press 'q'...");\
+      fflush(stdout);\
+      while(readKeyBoardStatus() != 2);\
     }\
   }\
 })
@@ -104,7 +116,14 @@
   }\
   if(next!=2) {\
     HandleSaveFilename();\
-    if(fileexists(savefile) == 0) remove(savefile);\
+    if(fileexists(savefile) == 0) {\
+      if(remove(savefile) != 0) {\
+        locate(0,0);\
+        printf("Delete failed! Press 'q'...");\
+        fflush(stdout);\
+        while(readKeyBoardStatus() != 2);\
+      }\
+    }\
   }\
 })
 
