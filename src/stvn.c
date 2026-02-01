@@ -143,7 +143,7 @@
 })
 
 // I definitely use this too much to not actually define it properly
-#define LoadBackground() ({\
+#define LoadBackground(n) {\
   int pfd=open(picture, 0);\
   if(pfd > 0) {\
     gzFile gzf=gzdopen(pfd, "rb");\
@@ -152,10 +152,12 @@
     gzread(gzf, background, 25600);\
     gzclose(gzf);\
     close(pfd);\
-    memcpy(oldpicture, picture, 18);\
+    if((n) == 0) {\
+      memcpy(oldpicture, picture, 18);\
+    }\
     RestoreScreen();\
   }\
-})
+}
 
 // Handle optionally gzipped and/or ice-packed SNDH files
 #define SNDHPlayMacro() ({\
@@ -982,14 +984,14 @@ static void run() {
                 // * If there's a difference in sprites to display
                 if(loadsave == 0) {
                   if(strcmp(picture, oldpicture) != 0) {
-                    LoadBackground();
+                    LoadBackground(0);
                   } else {
                     if(compare_sprites() != 0) {
-                      LoadBackground();
+                      LoadBackground(0);
                     }
                   }
                 } else {
-                  LoadBackground();
+                  LoadBackground(0);
                 }
 
                 charlines=0;
@@ -1048,7 +1050,7 @@ static void run() {
           snprintf(picture, 6, "DATA\\");
           memcpy(picture+5, line+1, filelen);
 
-          LoadBackground();
+          LoadBackground(0);
           reset_cursprites();
           spritecount=0;
           charlines=0;
@@ -1056,6 +1058,7 @@ static void run() {
       }
 
       if(*line == 'R') {
+        LoadBackground(1);
         RestoreScreen();
         reset_cursprites();
         spritecount=0;
