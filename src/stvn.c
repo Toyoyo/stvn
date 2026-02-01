@@ -67,6 +67,13 @@
   RedrawBorder();\
 })
 
+#define DispSaveError() ({\
+  locate(0,0);\
+  printf("Save failed! Press 'Space'...");\
+  fflush(stdout);\
+  while(readKeyBoardStatus() != 1);\
+})
+
 #define SaveMacro() ({\
   next=readKeyBoardStatus();\
   while(NoValidSaveChoice) {\
@@ -95,16 +102,10 @@
       }\
       _err |= fclose(fd) != 0;\
       if(_err) {\
-        locate(0,0);\
-        printf("Save failed! Press 'Space'...");\
-        fflush(stdout);\
-        while(readKeyBoardStatus() != 1);\
+        DispSaveError();\
       }\
     } else {\
-      locate(0,0);\
-      printf("Save failed! Press 'Space'...");\
-      fflush(stdout);\
-      while(readKeyBoardStatus() != 1);\
+      DispSaveError();\
     }\
   }\
 })
