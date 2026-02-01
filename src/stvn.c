@@ -664,7 +664,7 @@ static void run() {
 
   // Defaults
   long sndhbuffersize=20000;
-  char scriptfile[13] = "stvn.vns";
+  char scriptfile[18] = "stvn.vns";
 
   // Get video RAM address
   char *videoram=Logbase();
@@ -890,6 +890,7 @@ static void run() {
                   // I didn't want to implement this
                   if(*line == 'A') {
                     if(strlen(line) < 8) goto endspriteload;
+                    if(spritecount > 255) goto endspriteload;
                     int filelen=strlen(line)-7;
                     if(filelen > 12) filelen=12;
                     memset(currentsprites[spritecount].file, 0, 18);
@@ -921,7 +922,7 @@ static void run() {
                     savepointer=lineNumber;
                   }
 
-                  // We also beed to replay the 'B' Lines
+                  // We also need to replay the 'B' Lines
                   if(*line == 'B') {
                     if(strlen(line) == 8) {
                       char lineregister[2] = {0};
@@ -1405,7 +1406,7 @@ static void run() {
         if(strlen(line) < 8) goto endsprite;
 
         int filelen=strlen(line)-7;
-        if(filelen > 0) {
+        if(filelen > 0 && spritecount < 256) {
           if(filelen > 12) filelen=12;
           memset(spritefile, 0, 18);
           snprintf(spritefile, 6, "DATA\\");
@@ -1517,7 +1518,6 @@ static void run() {
   write_byte(originalKeyClick, (__uint8_t *)0x484);
 
   // I Hope I didn't forget anything. This isn't win3 though.
-  free(line);
   free(tuneptr);
   free(choicedata);
   free(background);
