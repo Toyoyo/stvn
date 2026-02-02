@@ -415,25 +415,27 @@ static void DispLoadSave(char mode) {
 }
 
 static void DispHelp() {
-  locate(34,8);
-  printf("-    Usage    -");
-  locate(34,9);
-  printf("[q] Quit       ");
-  locate(34,10);
-  printf("[b] Back       ");
-  locate(34,11);
-  printf("[l] Load save  ");
-  locate(34,12);
-  printf("[s] Save state ");
-  locate(34,13);
-  printf("[ ] Advance    ");
+  locate(32,7);
+  printf("-     Usage    -");
+  locate(32,8);
+  printf("[q] Quit        ");
+  locate(32,9);
+  printf("[b] Back        ");
+  locate(32,10);
+  printf("[l] Load save   ");
+  locate(32,11);
+  printf("[s] Save state  ");
+  locate(32,12);
+  printf("[e] Erase state ");
+  locate(32,13);
+  printf("[ ] Advance     ");
   fflush(stdout);
 
   char* videoram = Logbase();
-  DrawHLine(272, 128, 392);
-  DrawHLine(272, 224, 392);
-  DrawVLine(272, 128, 224);
-  DrawVLine(392, 128, 224);
+  DrawHLine(256, 112, 384);
+  DrawHLine(256, 224, 384);
+  DrawVLine(256, 112, 224);
+  DrawVLine(384, 112, 224);
 }
 
 // Wipe screen vertically
