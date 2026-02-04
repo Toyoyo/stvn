@@ -129,6 +129,14 @@
   }\
 })
 
+#define QuitMacro() ({\
+  next = readKeyBoardStatus();\
+  while (next != 10 && next != 11) {\
+    next = readKeyBoardStatus();\
+  }\
+  if (next == 10) goto endprog;\
+})
+
 #define ParseVCommand() ({\
   if (strlen(line) == 3) {\
     char registername_s[2] = {0};\
@@ -436,6 +444,19 @@ static void DispHelp() {
   DrawHLine(256, 224, 384);
   DrawVLine(256, 112, 224);
   DrawVLine(384, 112, 224);
+}
+
+static void DispQuit(void) {
+  locate(33,9);
+  printf("-    Quit    -");
+  locate(33,10);
+  printf("[1] Yes [2] No");
+
+  char* videoram = Logbase();
+  DrawHLine(264, 144, 376);
+  DrawHLine(264, 176, 376);
+  DrawVLine(264, 144, 176);
+  DrawVLine(376, 144, 176);
 }
 
 // Wipe screen vertically
@@ -764,7 +785,12 @@ static void run() {
         next=readKeyBoardStatus();
         while(next!=1) {
           // Our quit signal from 'q'
-          if(next == 2) goto endprog;
+          if(next == 2) {
+            SaveScreen();
+            DispQuit();
+            QuitMacro();
+            RestoreScreen();
+          }
 
           // Save
           if(next == 3) {
@@ -1223,7 +1249,13 @@ static void run() {
           next=readKeyBoardStatus();
           while(!(next>=10 && next<=(9+maxchoice))) {
             next=readKeyBoardStatus();
-            if(next == 2) goto endprog;
+            if(next == 2) {
+              SaveScreen();
+              DispQuit();
+              QuitMacro();
+              next=0;
+              RestoreScreen();
+            }
             if(next == 3) {
               SaveScreen();
               DispLoadSave(1);
