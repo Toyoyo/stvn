@@ -862,6 +862,16 @@ static void run() {
                 willplaying=0;
                 spritecount=0;
 
+                /* On load: stop music and clear state - will restart if 'P' is encountered */
+                if (loadsave == 1) {
+                  if (isplaying) {
+                    SNDH_StopTune();
+                    isplaying = 0;
+                  }
+                  memset(musicfile, 0, sizeof(musicfile));
+                  memset(oldmusicfile, 0, sizeof(oldmusicfile));
+                }
+
                 if(loadsave == 0) {
                   backup_spritearray();
                   reset_cursprites();
@@ -1013,6 +1023,14 @@ static void run() {
                     memcpy(oldmusicfile, musicfile, 12);
                     SNDHPlayMacro();
                   }
+                } else {
+                  // No 'P' line encountered - stop music
+                  if(isplaying == 1) {
+                    SNDH_StopTune();
+                    isplaying=0;
+                  }
+                  memset(musicfile, 0, sizeof(musicfile));
+                  memset(oldmusicfile, 0, sizeof(oldmusicfile));
                 }
 
                 // Now to display required sprites;
