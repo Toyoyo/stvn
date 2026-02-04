@@ -107,6 +107,8 @@ Supported operands:
 
   Note: Be sure to adjust the 'B' Line in STVN.INI to match the *uncompressed* size of your largest tune. The default is 20000 bytes.
 
+* 'PS' : Stop music
+
 * 'J' : Jump to label
 
   Syntax: ``J[label]`` like `JLBL1```

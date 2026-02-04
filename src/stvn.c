@@ -947,13 +947,19 @@ static void run() {
 
                   // And the lastmusicfile
                   if(*line == 'P') {
-                    int filelen=strlen(line)-1;
-                    if(filelen > 0) {
-                      if(filelen > 12) filelen=12;
-                      memset(musicfile, 0, 18);
-                      snprintf(musicfile, 6, "DATA\\");
-                      memcpy(musicfile+5, line+1, filelen);
-                      willplaying=1;
+                    if(strlen(line) == 2 && *(line+1) == 'S') {
+                      memset(musicfile, 0, sizeof(musicfile));
+                      memset(oldmusicfile, 0, sizeof(oldmusicfile));
+                      willplaying=0;
+                    } else {
+                      int filelen=strlen(line)-1;
+                      if(filelen > 0) {
+                        if(filelen > 12) filelen=12;
+                        memset(musicfile, 0, 18);
+                        snprintf(musicfile, 6, "DATA\\");
+                        memcpy(musicfile+5, line+1, filelen);
+                        willplaying=1;
+                      }
                     }
                   }
 
@@ -1156,20 +1162,30 @@ static void run() {
 
       // 'P' : Change music
       // The SNDH routine MUST be stopped ONLY if there's already one playing.
+      // 'PS' : Stop music
       if(*line == 'P') {
-        int filelen=strlen(line)-1;
-        if(filelen > 0) {
-          if(filelen > 12) filelen=12;
-          memset(musicfile, 0, 18);
-          snprintf(musicfile, 6, "DATA\\");
-          memcpy(musicfile+5, line+1, filelen);
-          if(strncmp(musicfile, oldmusicfile, 12) != 0) {
-            SNDHTune mytune;
-            memcpy(oldmusicfile, musicfile, 12);
-
-            if(isplaying == 1) SNDH_StopTune();
+        if(strlen(line) == 2 && *(line+1) == 'S') {
+          if(isplaying == 1) {
+            SNDH_StopTune();
             isplaying=0;
-            SNDHPlayMacro();
+          }
+          memset(musicfile, 0, sizeof(musicfile));
+          memset(oldmusicfile, 0, sizeof(oldmusicfile));
+        } else {
+          int filelen=strlen(line)-1;
+          if(filelen > 0) {
+            if(filelen > 12) filelen=12;
+            memset(musicfile, 0, 18);
+            snprintf(musicfile, 6, "DATA\\");
+            memcpy(musicfile+5, line+1, filelen);
+            if(strncmp(musicfile, oldmusicfile, 12) != 0) {
+              SNDHTune mytune;
+              memcpy(oldmusicfile, musicfile, 12);
+
+              if(isplaying == 1) SNDH_StopTune();
+              isplaying=0;
+              SNDHPlayMacro();
+            }
           }
         }
       }
