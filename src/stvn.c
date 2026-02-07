@@ -1151,7 +1151,7 @@ static void run() {
 
       // 'T' : Text line
       // We disabled line wrapping so make sure a line isn't more then 79 characters!
-      if(*line == 'T') {
+      if(*line == 'T' || *line == 'N') {
         // Skip already written lines
         // charlines being reset to 0 after each 'S' lines
         locate(0,21+charlines);
