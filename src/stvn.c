@@ -1548,7 +1548,7 @@ static void run() {
              // Actual writing.
              // Thanks, grad'
              if(pctmem[pctpos] == '0' || pctmem[pctpos] == '1') {
-                if(x+posx < 639 && posy+y <= 400) {
+                if(x+posx < 639 && posy+y <= 320) {
                   ppos = (y + posy) * 640 + x + posx;
                   if(pctmem[pctpos] == '1') videobuffer[ppos / 8] |= 1 << 7 - (ppos % 8);
                   if(pctmem[pctpos] == '0') videobuffer[ppos / 8] &= ~(1 << 7 - (ppos % 8));

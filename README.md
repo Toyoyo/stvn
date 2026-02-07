@@ -153,7 +153,7 @@ Supported operands:
 
   Screen boundary are checked during drawing and you can't draw on the text area.
 
-  More precicely: X coordinates after 640 are ignored and Y coordinates after 400 ends the drawing routine.
+  More precicely: X coordinates after 640 are ignored and Y coordinates after 320 ends the drawing routine.
 
   This can use quite some memory: 1 byte per pixel, allocated in 1024 bytes blocks, freed after operation.
 
