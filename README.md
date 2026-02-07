@@ -151,7 +151,7 @@ Supported operands:
 
   A converter script is provided.
 
-  Screen boundary are checked during drawing, but you can draw on the text area if you want.
+  Screen boundary are checked during drawing and you can't draw on the text area.
 
   More precicely: X coordinates after 640 are ignored and Y coordinates after 400 ends the drawing routine.
 
