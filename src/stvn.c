@@ -655,6 +655,7 @@ static void run() {
   char oldpicture[18] = {0};
   char musicfile[18] = {0};
   char oldmusicfile[18] = {0};
+  char sayername[260] = {0};
   int charlines=0;
   void* tuneptr;
   gzFile sndfile;
@@ -670,7 +671,6 @@ static void run() {
   long save_linenb = 0;
   int skipnexthistory=0;
   int loadsave=0;
-  char sayername[260] = {0};
 
   // Sprite crap
   char spritefile[18] = {0};
@@ -1046,13 +1046,6 @@ static void run() {
 
                 charlines=0;
 
-                memcpy(videoram+25600, textarea, 6400);
-                RedrawBorder();
-                if (sayername[0]) {
-                  locate(0,20);
-                  printf(sayername);
-                }
-
                 // Then the music
                 if(willplaying == 1) {
                   if(strncmp(musicfile, oldmusicfile, 12) != 0) {
@@ -1093,6 +1086,15 @@ static void run() {
                     }
                   }
                 }
+
+                /* Show the 'S' Line */
+                memcpy(videoram+25600, textarea, 6400);
+                RedrawBorder();
+                if (sayername[0]) {
+                  locate(0,20);
+                  printf(sayername);
+                }
+
                 // We're done, and the next action will be to display to current line.
                 // Which sould be a 'S' since they're the only ones advancing the save pointer.
                 loadsave=0;
