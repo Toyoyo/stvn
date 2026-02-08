@@ -670,6 +670,7 @@ static void run() {
   long save_linenb = 0;
   int skipnexthistory=0;
   int loadsave=0;
+  char sayername[260] = {0};
 
   // Sprite crap
   char spritefile[18] = {0};
@@ -965,6 +966,8 @@ static void run() {
 
                   if(*line == 'S') {
                     savepointer=lineNumber;
+                    strncpy(sayername, line + 1, sizeof(sayername) - 1);
+                    sayername[sizeof(sayername) - 1] = '\0';
                   }
 
                   // We also need to replay the 'B' Lines
@@ -1042,6 +1045,13 @@ static void run() {
                 }
 
                 charlines=0;
+
+                memcpy(videoram+25600, textarea, 6400);
+                RedrawBorder();
+                if (sayername[0]) {
+                  locate(0,20);
+                  printf(sayername);
+                }
 
                 // Then the music
                 if(willplaying == 1) {
