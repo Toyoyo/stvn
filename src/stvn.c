@@ -38,7 +38,7 @@
 #define read_byte(address) (*address)
 
 // Used to check a valid choice in Loading/Saving dialogs
-#define NoValidSaveChoice next != 2 && (next < 10 || next > 19)
+#define NoValidSaveChoice (next != 2 && next != 9) && (next < 10 || next > 19)
 
 // Screen backup/restore
 #define RestoreScreen() memcpy(videoram, background, 25600)
@@ -79,7 +79,7 @@
   while(NoValidSaveChoice) {\
     next=readKeyBoardStatus();\
   }\
-  if(next!=2) {\
+  if(next!=2 && next!=9) {\
     HandleSaveFilename();\
     RestoreScreen();\
     FILE* fd=fopen(savefile, "w");\
@@ -115,7 +115,7 @@
   while(NoValidSaveChoice) {\
     next=readKeyBoardStatus();\
   }\
-  if(next!=2) {\
+  if(next!=2 && next!=9) {\
     HandleSaveFilename();\
     RestoreScreen();\
     if(fileexists(savefile) == 0) {\
@@ -131,7 +131,7 @@
 
 #define QuitMacro() ({\
   next = readKeyBoardStatus();\
-  while (next != 10 && next != 11) {\
+  while (next != 9 && next != 10 && next != 11) {\
     next = readKeyBoardStatus();\
   }\
   if (next == 10) goto endprog;\
@@ -139,7 +139,7 @@
 
 #define EscMacro() ({\
   next = readKeyBoardStatus();\
-  while (next != 10 && next != 11) {\
+  while (next != 9 && next != 10 && next != 11) {\
     next = readKeyBoardStatus();\
   }\
   if (next == 10) {\
@@ -844,6 +844,7 @@ static void run() {
             SaveScreen();
             DispQuit();
             QuitMacro();
+            next = 0;
             RestoreScreen();
           }
 
@@ -852,6 +853,7 @@ static void run() {
             SaveScreen();
             DispLoadSave(1);
             SaveMacro();
+            next = 0;
             RestoreScreen();
           }
 
@@ -859,6 +861,7 @@ static void run() {
             SaveScreen();
             DispLoadSave(2);
             DeleteMacro();
+            next = 0;
             RestoreScreen();
           }
 
@@ -866,6 +869,7 @@ static void run() {
             SaveScreen();
             DispEsc();
             EscMacro();
+            next = 0;
             if(lineNumber == 0) break;
             RestoreScreen();
           }
@@ -883,9 +887,10 @@ static void run() {
           if(next == 6) {
             SaveScreen();
             DispHelp();
-            while(next!=2) {
+            while(next!=2 && next!=9) {
                 next=readKeyBoardStatus();
             }
+            next = 0;
             RestoreScreen();
           }
 
@@ -900,7 +905,7 @@ static void run() {
             RestoreScreen();
             lblloadsave:
             // Effective loading.
-            if(next!=2) {
+            if(next!=2 && next!=9) {
               HandleSaveFilename();
               if(fileexists(savefile) == 0) {
                 DispLoading();
@@ -1371,10 +1376,14 @@ static void run() {
               while(NoValidSaveChoice) {
                 next=readKeyBoardStatus();
               }
-              HandleSaveFilename();
-              RestoreScreen();
-              if(fileexists(savefile) == 0) {
-                goto lblloadsave;
+              if(next!=2 && next!=9) {
+                HandleSaveFilename();
+                RestoreScreen();
+                if(fileexists(savefile) == 0) {
+                  goto lblloadsave;
+                }
+              } else {
+                RestoreScreen();
               }
               next=0;
             }
@@ -1401,9 +1410,10 @@ static void run() {
             if(next == 6) {
               SaveScreen();
               DispHelp();
-              while(next!=2) {
+              while(next!=2 && next!=9) {
                   next=readKeyBoardStatus();
               }
+              next = 0;
               RestoreScreen();
             }
 
