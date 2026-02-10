@@ -137,6 +137,39 @@
   if (next == 10) goto endprog;\
 })
 
+#define EscMacro() ({\
+  next = readKeyBoardStatus();\
+  while (next != 10 && next != 11) {\
+    next = readKeyBoardStatus();\
+  }\
+  if (next == 10) {\
+    rewind(script);\
+    lineNumber = 0;\
+    savepointer = 0;\
+    willplaying = 0;\
+    spritecount = 0;\
+    memset(musicfile, 0, sizeof(musicfile));\
+    memset(oldmusicfile, 0, sizeof(oldmusicfile));\
+    memset(picture, 0, sizeof(picture));\
+    memset(oldpicture, 0, sizeof(oldpicture));\
+    reset_cursprites();\
+    reset_prevsprites();\
+    if(isplaying == 1) SNDH_StopTune();\
+    isplaying = 0;\
+    savehistory_idx = 0;\
+    memset(savehistory, 0, sizeof(savehistory));\
+    memset(choicedata, 0, 11);\
+    memset(sayername, 0, sizeof(sayername));\
+    skipnexthistory = 0;\
+    loadsave = 0;\
+    charlines = 0;\
+    memset(background, 0x00, 25600);\
+    memset(videoram, 0x00, 25600);\
+    memcpy(videoram+25600, textarea, 6400);\
+    RedrawBorder();\
+  }\
+})
+
 #define ParseVCommand() ({\
   if (strlen(line) == 3) {\
     char registername_s[2] = {0};\
@@ -337,6 +370,9 @@ static int readKeyBoardStatus() {
     if ((char)key == 'e') {
       return 8;
     }
+    if ((char)key == 27) {
+      return 9;
+    }
     if ((char)key == '1') {
       return 10;
     }
@@ -423,27 +459,29 @@ static void DispLoadSave(char mode) {
 }
 
 static void DispHelp() {
-  locate(32,7);
+  locate(32,6);
   printf("-     Usage    -");
-  locate(32,8);
+  locate(32,7);
   printf("[q] Quit        ");
-  locate(32,9);
+  locate(32,8);
   printf("[b] Back        ");
-  locate(32,10);
+  locate(32,9);
   printf("[l] Load save   ");
-  locate(32,11);
+  locate(32,10);
   printf("[s] Save state  ");
-  locate(32,12);
+  locate(32,11);
   printf("[e] Erase state ");
-  locate(32,13);
+  locate(32,12);
   printf("[ ] Advance     ");
+  locate(32,13);
+  printf("[esc] Restart   ");
   fflush(stdout);
 
   char* videoram = Logbase();
-  DrawHLine(256, 112, 384);
+  DrawHLine(256, 96, 384);
   DrawHLine(256, 224, 384);
-  DrawVLine(256, 112, 224);
-  DrawVLine(384, 112, 224);
+  DrawVLine(256, 96, 224);
+  DrawVLine(384, 96, 224);
 }
 
 static void DispQuit(void) {
@@ -457,6 +495,22 @@ static void DispQuit(void) {
   DrawHLine(264, 176, 376);
   DrawVLine(264, 144, 176);
   DrawVLine(376, 144, 176);
+}
+
+static void DispEsc(void) {
+  char* videoram = Logbase();
+  for(int y=144; y<=175; y++) {
+    memset(videoram + y*80 + 32, 0x00, 17);
+  }
+  locate(32,9);
+  printf("-    Restart    -");
+  locate(32,10);
+  printf(" [1] Yes  [2] No ");
+  fflush(stdout);
+  DrawHLine(256, 144, 392);
+  DrawHLine(256, 176, 392);
+  DrawVLine(256, 144, 176);
+  DrawVLine(392, 144, 176);
 }
 
 // Wipe screen vertically
@@ -805,6 +859,14 @@ static void run() {
             SaveScreen();
             DispLoadSave(2);
             DeleteMacro();
+            RestoreScreen();
+          }
+
+          if(next == 9) {
+            SaveScreen();
+            DispEsc();
+            EscMacro();
+            if(lineNumber == 0) break;
             RestoreScreen();
           }
 
@@ -1327,6 +1389,15 @@ static void run() {
                 goto seektoline;
             }
 
+            if(next == 9) {
+              SaveScreen();
+              DispEsc();
+              EscMacro();
+              if(lineNumber == 0) break;
+              next=0;
+              RestoreScreen();
+            }
+
             if(next == 6) {
               SaveScreen();
               DispHelp();
@@ -1337,7 +1408,8 @@ static void run() {
             }
 
           }
-          choicedata[selectedregister] = next - 9;
+          if(lineNumber > 0)
+            choicedata[selectedregister] = next - 9;
         }
       }
 
