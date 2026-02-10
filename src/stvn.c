@@ -888,6 +888,7 @@ static void run() {
                 savepointer=0;
                 willplaying=0;
                 spritecount=0;
+                memset(picture, 0, sizeof(picture));
 
                 /* On load: stop music and clear state - will restart if 'P' is encountered */
                 if (loadsave == 1) {
@@ -1032,7 +1033,11 @@ static void run() {
                 // In this case, reload on two cases:
                 // * If the background changed, obviously
                 // * If there's a difference in sprites to display
-                if(loadsave == 0) {
+                if (picture[0] == '\0') {
+                  memset(background, 0x00, 25600);
+                  memset(oldpicture, 0, sizeof(oldpicture));
+                  RestoreScreen();
+                } else if(loadsave == 0) {
                   if(strcmp(picture, oldpicture) != 0) {
                     LoadBackground(0);
                   } else {
