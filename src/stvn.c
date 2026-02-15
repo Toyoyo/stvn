@@ -697,6 +697,99 @@ static void FxCircleIn(char byte) {
   }
 }
 
+// 8x8 Bayer dither matrix (values 0-63) for fade effects
+static const unsigned char bayer8x8[8][8] = {
+  { 0, 32,  8, 40,  2, 34, 10, 42},
+  {48, 16, 56, 24, 50, 18, 58, 26},
+  {12, 44,  4, 36, 14, 46,  6, 38},
+  {60, 28, 52, 20, 62, 30, 54, 22},
+  { 3, 35, 11, 43,  1, 33,  9, 41},
+  {51, 19, 59, 27, 49, 17, 57, 25},
+  {15, 47,  7, 39, 13, 45,  5, 37},
+  {63, 31, 55, 23, 61, 29, 53, 21}
+};
+
+// Fade current screen to black using ordered dithering (3 steps)
+static void FxFadeOut(void) {
+  char* videoram = Logbase();
+  char* original = malloc(25600);
+  char* buffer = malloc(25600);
+  if (!original || !buffer) { free(original); free(buffer); return; }
+  memcpy(original, videoram, 25600);
+
+  for (int step = 1; step <= 3; step++) {
+    int threshold = step * 21;
+    unsigned long masks32[8];
+    for (int r = 0; r < 8; r++) {
+      unsigned char mask = 0;
+      for (int bit = 0; bit < 8; bit++) {
+        if (bayer8x8[r][bit] < threshold)
+          mask |= (0x80 >> bit);
+      }
+      masks32[r] = mask * 0x01010101UL;
+    }
+    for (int y = 0; y < 320; y++) {
+      unsigned long m32 = masks32[y & 7];
+      unsigned long* dst = (unsigned long*)(buffer + y * 80);
+      unsigned long* src = (unsigned long*)(original + y * 80);
+      for (int i = 0; i < 20; i++) {
+        dst[i] = src[i] | m32;
+      }
+    }
+    memcpy(videoram, buffer, 25600);
+    delay(5);
+  }
+
+  free(original);
+  free(buffer);
+  memset(videoram, 0xFF, 25600);
+}
+
+// Fade from black to a new image using ordered dithering (3 steps)
+static void FxFadeIn(const char *filepath) {
+  char* videoram = Logbase();
+  char* target = malloc(25600);
+  char* buffer = malloc(25600);
+  if (!target || !buffer) { free(target); free(buffer); return; }
+
+  int pfd = open(filepath, 0);
+  if (pfd <= 0) { free(target); free(buffer); return; }
+  gzFile gzf = gzdopen(pfd, "rb");
+  gzseek(gzf, 2, SEEK_CUR);
+  gzseek(gzf, 32, SEEK_CUR);
+  gzread(gzf, target, 25600);
+  gzclose(gzf);
+
+  memset(videoram, 0xFF, 25600);
+
+  for (int step = 1; step <= 3; step++) {
+    int threshold = step * 21;
+    unsigned long masks32[8];
+    for (int r = 0; r < 8; r++) {
+      unsigned char mask = 0;
+      for (int bit = 0; bit < 8; bit++) {
+        if (bayer8x8[r][bit] < threshold)
+          mask |= (0x80 >> bit);
+      }
+      masks32[r] = (unsigned char)(~mask) * 0x01010101UL;
+    }
+    for (int y = 0; y < 320; y++) {
+      unsigned long m32 = masks32[y & 7];
+      unsigned long* dst = (unsigned long*)(buffer + y * 80);
+      unsigned long* src = (unsigned long*)(target + y * 80);
+      for (int i = 0; i < 20; i++) {
+        dst[i] = src[i] | m32;
+      }
+    }
+    memcpy(videoram, buffer, 25600);
+    delay(5);
+  }
+
+  memcpy(videoram, target, 25600);
+  free(target);
+  free(buffer);
+}
+
 static void run() {
   char *background;
   char textarea[6400] = {0};
@@ -1558,7 +1651,23 @@ static void run() {
             FxCircleIn(255);
           }
 
+          // FxFadeOut (ordered dither fade to black)
+          if(effectnum == 98) FxFadeOut();
+
+          // FxFadeIn (ordered dither fade from black to new image)
+          if(effectnum == 99) {
+            if(strlen(line) >= 4) {
+              char fadein_path[18] = {0};
+              int filelen = strlen(line) - 3;
+              if(filelen > 12) filelen = 12;
+              snprintf(fadein_path, 6, "DATA\\");
+              memcpy(fadein_path + 5, line + 3, filelen);
+              FxFadeIn(fadein_path);
+            }
+          }
+
           // Flush keyboard buffer after rendering effect
+          reset_cursprites();
           while(Cconis()) Crawcin();
         }
       }

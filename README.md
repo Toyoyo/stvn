@@ -257,3 +257,9 @@ Supported operands:
   39: 37 then 38
 
   40: 38 then 37
+
+  98: Fade the image area to black
+
+  99: Fade from black to an image
+
+  Syntax: ``X99[file]`` like ``X99IMAGE.PNG``
