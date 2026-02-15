@@ -178,6 +178,8 @@ Supported operands:
 
   Syntax: ``X[XX]`` like ``X03``
 
+  Effects should (must) be followed by a 'I' line since they erase the background.
+
   01: Vertically fade to black from top to bottom, 2 lines by 2 lines
 
   02: Vertically fade to white from top to bottom, 2 lines by 2 lines

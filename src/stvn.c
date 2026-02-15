@@ -743,14 +743,14 @@ static void FxFadeOut(void) {
 }
 
 // Fade from black to a new image using ordered dithering (3 steps)
-static void FxFadeIn(const char *filepath) {
+// Uses scratch as a double buffer to avoid extra allocation
+static void FxFadeIn(const char *filepath, char *scratch) {
   char* videoram = Logbase();
   char* target = malloc(25600);
-  char* buffer = malloc(25600);
-  if (!target || !buffer) { free(target); free(buffer); return; }
+  if (!target) return;
 
   int pfd = open(filepath, 0);
-  if (pfd <= 0) { free(target); free(buffer); return; }
+  if (pfd <= 0) { free(target); return; }
   gzFile gzf = gzdopen(pfd, "rb");
   gzseek(gzf, 2, SEEK_CUR);
   gzseek(gzf, 32, SEEK_CUR);
@@ -772,19 +772,18 @@ static void FxFadeIn(const char *filepath) {
     }
     for (int y = 0; y < 320; y++) {
       unsigned long m32 = masks32[y & 7];
-      unsigned long* dst = (unsigned long*)(buffer + y * 80);
+      unsigned long* dst = (unsigned long*)(scratch + y * 80);
       unsigned long* src = (unsigned long*)(target + y * 80);
       for (int i = 0; i < 20; i++) {
         dst[i] = src[i] | m32;
       }
     }
-    memcpy(videoram, buffer, 25600);
+    memcpy(videoram, scratch, 25600);
     delay(5);
   }
 
   memcpy(videoram, target, 25600);
   free(target);
-  free(buffer);
 }
 
 static void run() {
@@ -1659,7 +1658,8 @@ static void run() {
               if(filelen > 12) filelen = 12;
               snprintf(fadein_path, 6, "DATA\\");
               memcpy(fadein_path + 5, line + 3, filelen);
-              FxFadeIn(fadein_path);
+              FxFadeIn(fadein_path, background);
+              SaveScreen();
             }
           }
 
