@@ -709,15 +709,15 @@ static const unsigned char bayer8x8[8][8] = {
   {63, 31, 55, 23, 61, 29, 53, 21}
 };
 
-// Fade current screen to black using ordered dithering (3 steps)
+// Fade current screen to black using ordered dithering (4 steps)
 static void FxFadeOut(void) {
   char* videoram = Logbase();
   char* buffer = malloc(25600);
   if (!buffer) return;
   memcpy(buffer, videoram, 25600);
 
-  for (int step = 1; step <= 3; step++) {
-    int threshold = step * 21;
+  for (int step = 1; step <= 4; step++) {
+    int threshold = step * 16;
     unsigned long masks32[8];
     for (int r = 0; r < 8; r++) {
       unsigned char mask = 0;
@@ -742,7 +742,7 @@ static void FxFadeOut(void) {
   memset(videoram, 0xFF, 25600);
 }
 
-// Fade from black to a new image using ordered dithering (3 steps)
+// Fade from black to a new image using ordered dithering (4 steps)
 // Uses scratch as a double buffer to avoid extra allocation
 static void FxFadeIn(const char *filepath, char *scratch) {
   char* videoram = Logbase();
@@ -759,8 +759,8 @@ static void FxFadeIn(const char *filepath, char *scratch) {
 
   memset(videoram, 0xFF, 25600);
 
-  for (int step = 1; step <= 3; step++) {
-    int threshold = step * 21;
+  for (int step = 1; step <= 4; step++) {
+    int threshold = step * 16;
     unsigned long masks32[8];
     for (int r = 0; r < 8; r++) {
       unsigned char mask = 0;
