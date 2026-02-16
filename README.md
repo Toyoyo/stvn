@@ -264,4 +264,4 @@ Supported operands:
 
   99: Fade from black to an image
 
-  Syntax: ``X99[file]`` like ``X99IMAGE.PNG``
+  Syntax: ``X99[file]`` like ``X99IMAGE.PI3``
