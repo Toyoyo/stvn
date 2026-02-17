@@ -1044,6 +1044,7 @@ static void run() {
                 savepointer=0;
                 willplaying=0;
                 spritecount=0;
+                int bgcolor=0;
                 memset(picture, 0, sizeof(picture));
 
                 /* On load: stop music and clear state - will restart if 'P' is encountered */
@@ -1088,13 +1089,61 @@ static void run() {
                   if(*line == 'X') {
                     reset_cursprites();
                     spritecount=0;
-                    // X99 loads a new background image, track it like 'I'
-                    if(strlen(line) >= 4 && strncmp(line+1, "99", 2) == 0) {
-                      int filelen = strlen(line) - 3;
-                      if(filelen > 12) filelen = 12;
+                    if(strlen(line) >= 3) {
+                      char effect[3] = {0};
+                      memcpy(effect, line+1, 2);
+                      char effectnum = atoi(effect);
                       memset(picture, 0, 18);
-                      snprintf(picture, 6, "DATA\\");
-                      memcpy(picture + 5, line + 3, filelen);
+                      memset(oldpicture, 0, 18);
+                      // Track background color
+                      if(effectnum == 1) bgcolor = 255;
+                      if(effectnum == 2) bgcolor = 0;
+                      if(effectnum == 3) bgcolor = 0;
+                      if(effectnum == 4) bgcolor = 255;
+                      if(effectnum == 5) bgcolor = 255;
+                      if(effectnum == 6) bgcolor = 0;
+                      if(effectnum == 7) bgcolor = 0;
+                      if(effectnum == 8) bgcolor = 255;
+                      if(effectnum == 9) bgcolor = 255;
+                      if(effectnum == 10) bgcolor = 0;
+                      if(effectnum == 11) bgcolor = 0;
+                      if(effectnum == 12) bgcolor = 255;
+                      if(effectnum == 13) bgcolor = 255;
+                      if(effectnum == 14) bgcolor = 0;
+                      if(effectnum == 15) bgcolor = 0;
+                      if(effectnum == 16) bgcolor = 255;
+                      if(effectnum == 17) bgcolor = 255;
+                      if(effectnum == 18) bgcolor = 0;
+                      if(effectnum == 19) bgcolor = 0;
+                      if(effectnum == 20) bgcolor = 255;
+                      if(effectnum == 21) bgcolor = 255;
+                      if(effectnum == 22) bgcolor = 0;
+                      if(effectnum == 23) bgcolor = 0;
+                      if(effectnum == 24) bgcolor = 255;
+                      if(effectnum == 25) bgcolor = 255;
+                      if(effectnum == 26) bgcolor = 0;
+                      if(effectnum == 27) bgcolor = 0;
+                      if(effectnum == 28) bgcolor = 255;
+                      if(effectnum == 29) bgcolor = 255;
+                      if(effectnum == 30) bgcolor = 0;
+                      if(effectnum == 31) bgcolor = 0;
+                      if(effectnum == 32) bgcolor = 255;
+                      if(effectnum == 33) bgcolor = 255;
+                      if(effectnum == 34) bgcolor = 0;
+                      if(effectnum == 35) bgcolor = 0;
+                      if(effectnum == 36) bgcolor = 255;
+                      if(effectnum == 37) bgcolor = 255;
+                      if(effectnum == 38) bgcolor = 0;
+                      if(effectnum == 39) bgcolor = 0;
+                      if(effectnum == 40) bgcolor = 255;
+                      if(effectnum == 98) bgcolor = 255;
+                      // X99 loads a new background image, track it like 'I'
+                      if(effectnum == 99 && strlen(line) >= 4) {
+                        int filelen = strlen(line) - 3;
+                        if(filelen > 12) filelen = 12;
+                        snprintf(picture, 6, "DATA\\");
+                        memcpy(picture + 5, line + 3, filelen);
+                      }
                     }
                   }
 
@@ -1204,7 +1253,7 @@ static void run() {
                 // * If the background changed, obviously
                 // * If there's a difference in sprites to display
                 if (picture[0] == '\0') {
-                  memset(background, 0x00, 25600);
+                  memset(background, bgcolor, 25600);
                   memset(oldpicture, 0, sizeof(oldpicture));
                   RestoreScreen();
                 } else if(loadsave == 0) {
@@ -1673,6 +1722,7 @@ static void run() {
               snprintf(picture, 6, "DATA\\");
               memcpy(picture + 5, line + 3, filelen);
               FxFadeIn(picture, background);
+              memcpy(oldpicture, picture, 18);
               SaveScreen();
             }
           }
