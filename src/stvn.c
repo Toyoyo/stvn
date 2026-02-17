@@ -1084,6 +1084,20 @@ static void run() {
                     spritecount=0;
                   }
 
+                  // This wipes the screen, so also invalidates previous sprites
+                  if(*line == 'X') {
+                    reset_cursprites();
+                    spritecount=0;
+                    // X99 loads a new background image, track it like 'I'
+                    if(strlen(line) >= 4 && strncmp(line+1, "99", 2) == 0) {
+                      int filelen = strlen(line) - 3;
+                      if(filelen > 12) filelen = 12;
+                      memset(picture, 0, 18);
+                      snprintf(picture, 6, "DATA\\");
+                      memcpy(picture + 5, line + 3, filelen);
+                    }
+                  }
+
                   // I didn't want to implement this
                   if(*line == 'A') {
                     if(strlen(line) < 8) goto endspriteload;
@@ -1653,18 +1667,19 @@ static void run() {
           // FxFadeIn (ordered dither fade from black to new image)
           if(effectnum == 99) {
             if(strlen(line) >= 4) {
-              char fadein_path[18] = {0};
               int filelen = strlen(line) - 3;
               if(filelen > 12) filelen = 12;
-              snprintf(fadein_path, 6, "DATA\\");
-              memcpy(fadein_path + 5, line + 3, filelen);
-              FxFadeIn(fadein_path, background);
+              memset(picture, 0, 18);
+              snprintf(picture, 6, "DATA\\");
+              memcpy(picture + 5, line + 3, filelen);
+              FxFadeIn(picture, background);
               SaveScreen();
             }
           }
 
-          // Flush keyboard buffer after rendering effect
           reset_cursprites();
+          spritecount=0;
+          // Flush keyboard buffer after rendering effect
           while(Cconis()) Crawcin();
         }
       }
