@@ -1094,7 +1094,6 @@ static void run() {
                       memcpy(effect, line+1, 2);
                       char effectnum = atoi(effect);
                       memset(picture, 0, 18);
-                      memset(oldpicture, 0, 18);
                       // Track background color
                       if(effectnum == 1) bgcolor = 255;
                       if(effectnum == 2) bgcolor = 0;
@@ -1262,6 +1261,8 @@ static void run() {
                   } else {
                     if(compare_sprites() != 0) {
                       LoadBackground(0);
+                    } else {
+                      RestoreScreen();
                     }
                   }
                 } else {
