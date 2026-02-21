@@ -1598,6 +1598,9 @@ static void run() {
           // Flush keyboard buffer before rendering effect
           while(Cconis()) Crawcin();
 
+          // Effects 1-40 and 98 invalidate the current picture
+          if(effectnum != 99) memset(picture, 0, 18);
+
           // FxVWipeDown set
           if(effectnum == 1) FxVWipeDown(255);
           if(effectnum == 2) FxVWipeDown(0);
