@@ -1261,8 +1261,6 @@ static void run() {
                   } else {
                     if(compare_sprites() != 0) {
                       LoadBackground(0);
-                    } else {
-                      RestoreScreen();
                     }
                   }
                 } else {
