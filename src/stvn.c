@@ -1456,13 +1456,30 @@ static void run() {
 
       // Jump to start
       if(*line == 'F') {
-         rewind(script);
-         lineNumber=0;
-         savepointer=0;
-         savehistory_idx=0;
-         memset(savehistory, 0, sizeof(savehistory));
-         willplaying=0;
-         spritecount=0;
+        rewind(script);
+        lineNumber = 0;
+        savepointer = 0;
+        willplaying = 0;
+        spritecount = 0;
+        memset(musicfile, 0, sizeof(musicfile));
+        memset(oldmusicfile, 0, sizeof(oldmusicfile));
+        memset(picture, 0, sizeof(picture));
+        memset(oldpicture, 0, sizeof(oldpicture));
+        reset_cursprites();
+        reset_prevsprites();
+        if(isplaying == 1) SNDH_StopTune();
+        isplaying = 0;
+        savehistory_idx = 0;
+        memset(savehistory, 0, sizeof(savehistory));
+        memset(choicedata, 0, 11);
+        memset(sayername, 0, sizeof(sayername));
+        skipnexthistory = 0;
+        loadsave = 0;
+        charlines = 0;
+        memset(background, 0x00, 25600);
+        memset(videoram, 0x00, 25600);
+        memcpy(videoram+25600, textarea, 6400);
+        RedrawBorder();
       }
 
       // 'B' : Jump to label if register is set
