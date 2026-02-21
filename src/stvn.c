@@ -1251,20 +1251,27 @@ static void run() {
                 // In this case, reload on two cases:
                 // * If the background changed, obviously
                 // * If there's a difference in sprites to display
+                int restored = 0;
                 if (picture[0] == '\0') {
                   memset(background, bgcolor, 25600);
                   memset(oldpicture, 0, sizeof(oldpicture));
                   RestoreScreen();
+                  restored = 1;
                 } else if(loadsave == 0) {
                   if(strcmp(picture, oldpicture) != 0) {
                     LoadBackground(0);
+                    restored = 1;
                   } else {
                     if(compare_sprites() != 0) {
                       LoadBackground(0);
+                      restored = 1;
+                    } else if(spritecount == 0) {
+                      RestoreScreen();
                     }
                   }
                 } else {
                   LoadBackground(0);
+                  restored = 1;
                 }
 
                 charlines=0;
@@ -1292,7 +1299,9 @@ static void run() {
                 }
 
                 // Now to display required sprites;
-                if(compare_sprites() != 0 || loadsave == 1) {
+                // Redraw if sprites changed, or if videoram was refreshed
+                // (wiping any previously composited sprites)
+                if(compare_sprites() != 0 || restored) {
                   int spritecounter=1;
                   if(spritecount > 0) {
                     for(spritecounter=1; spritecounter <= spritecount; spritecounter++) {
