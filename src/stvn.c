@@ -1169,7 +1169,6 @@ static void run() {
                   if(*line == 'P') {
                     if(strlen(line) == 2 && *(line+1) == 'S') {
                       memset(musicfile, 0, sizeof(musicfile));
-                      memset(oldmusicfile, 0, sizeof(oldmusicfile));
                       willplaying=0;
                     } else {
                       int filelen=strlen(line)-1;
