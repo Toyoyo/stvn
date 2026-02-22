@@ -1413,7 +1413,6 @@ static void run() {
             isplaying=0;
           }
           memset(musicfile, 0, sizeof(musicfile));
-          memset(oldmusicfile, 0, sizeof(oldmusicfile));
         } else {
           int filelen=strlen(line)-1;
           if(filelen > 0) {
