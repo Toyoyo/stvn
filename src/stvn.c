@@ -989,7 +989,6 @@ static void run() {
 
           // Load
           if(next == 4) {
-            loadsave=1;
             SaveScreen();
             DispLoadSave(0);
             while(NoValidSaveChoice) {
@@ -999,6 +998,7 @@ static void run() {
             lblloadsave:
             // Effective loading.
             if(next!=2 && next!=9) {
+              loadsave=1;
               HandleSaveFilename();
               if(fileexists(savefile) == 0) {
                 DispLoading();
