@@ -1049,6 +1049,8 @@ static void run() {
                 willplaying=0;
                 spritecount=0;
                 int bgcolor=0;
+                int hist_ptr = 0;
+                int replay_iter = 0;
                 memset(picture, 0, sizeof(picture));
 
                 /* On load: stop music and clear state - will restart if 'P' is encountered */
@@ -1066,7 +1068,8 @@ static void run() {
                   reset_cursprites();
                 }
 
-                while(lineNumber < save_linenb) {
+                while(hist_ptr < savehistory_idx && lineNumber != save_linenb) {
+                  if(++replay_iter > 200000) break;
                   line = get_line(script);
                   if(line == NULL) goto endprog;
                   lineNumber = lineNumber + 1;
@@ -1190,43 +1193,74 @@ static void run() {
                     savepointer=lineNumber;
                     strncpy(sayername, line + 1, sizeof(sayername) - 1);
                     sayername[sizeof(sayername) - 1] = '\0';
+                    if(hist_ptr < savehistory_idx && lineNumber == savehistory[hist_ptr]) {
+                      hist_ptr++;
+                    }
                   }
 
-                  // We also need to replay the 'B' Lines
+                  // Replay the 'B' Lines: use savehistory lookahead instead of
+                  // choicedata (single-snapshot) to pick the correct branch.
                   if(*line == 'B') {
                     if(strlen(line) == 8) {
-                      char lineregister[2] = {0};
-                      memcpy(lineregister, line+1, 1);
-                      char selectedregister=atoi(lineregister);
+                      memcpy(jumplabel, line+3, 6);
 
-                      char linechoice[2] = {0};
-                      memcpy(linechoice, line+2, 1);
-                      char selectedchoice=atoi(linechoice);
-                      if(selectedchoice > 3) selectedchoice=3;
-                      if(selectedchoice < 0) selectedchoice=0;
+                      // Lookahead: find first 'S' line after this branch's label
+                      long saved_pos = ftell(script);
+                      long saved_ln = lineNumber;
+                      int next_s_ln = -1;
+                      int found_label = 0;
+                      rewind(script);
+                      lineNumber = 0;
+                      while(1) {
+                        line = get_line(script);
+                        if(line == NULL) goto blookend;
+                        lineNumber = lineNumber + 1;
+                        if(!found_label) {
+                          if(strlen(line) >= 5 && strncmp(jumplabel, line, 5) == 0) {
+                            found_label = 1;
+                          }
+                        } else if(*line == 'S') {
+                          next_s_ln = (int)lineNumber;
+                          goto blookend;
+                        } else if(*line == 'J' || *line == 'L' || *line == 'F') {
+                          /* Block ends (jump out, next label, or engine reset) without an S */
+                          goto blookend;
+                        }
+                      }
+                      blookend:
+                      ;
 
-                      if(choicedata[selectedregister] == selectedchoice) {
-                        memcpy(jumplabel, line+3, 6);
+                      int take_branch = (next_s_ln > 0 &&
+                                         hist_ptr < savehistory_idx &&
+                                         next_s_ln == savehistory[hist_ptr]);
+
+                      if(take_branch) {
+                        rewind(script);
+                        lineNumber = 0;
                         while(1) {
                           line = get_line(script);
                           if(line == NULL) goto endprog;
                           lineNumber = lineNumber + 1;
-                          if(strlen(line) >= 5) {
-                            if(strncmp(jumplabel, line, 5) == 0) {
-                              goto btestend;
-                            }
+                          if(strlen(line) >= 5 && strncmp(jumplabel, line, 5) == 0) {
+                            goto btestend;
                           }
                         }
                         btestend:
                         ;
+                      } else {
+                        fseek(script, saved_pos, SEEK_SET);
+                        lineNumber = saved_ln;
                       }
+                      continue;
                     }
                   }
 
-                  // And probably 'J' Lines too.
+                  // 'J' Lines: rewind first so backward jumps work (matches runtime).
                   if(*line == 'J') {
                     if(strlen(line) >= 6) {
                       memcpy(jumplabel, line+1, 5);
+                      rewind(script);
+                      lineNumber = 0;
                       while(1) {
                        line = get_line(script);
                        if(line == NULL) goto endprog;
