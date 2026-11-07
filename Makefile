@@ -3,7 +3,7 @@ BUILD_DIR=./build
 DIST_DIR=./dist
 RSC_DIR=./rsc
 LIBCMINI=./deps/libcmini
-ZLIB=./deps/zlib-1.3.1
+ZLIB=./deps/zlib-1.4
 ICE=./deps/pack-ice
 
 CROSS=m68k-atari-mintelf-
